@@ -16,5 +16,6 @@ object SoccerstandTokens {
   val countryCode = "ZB÷"
   val round = "ER÷"
   val newGame = '~'
+  val anyContent = ".+?"
 }
 

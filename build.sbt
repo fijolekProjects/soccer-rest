@@ -12,6 +12,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-experimental"             % akkaStreamV,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental"  % akkaStreamV,
     "org.scala-lang.modules" %% "scala-xml" % "1.0.3",
+    "org.slf4j" % "slf4j-simple" % "1.7.10",
     "org.mongodb" %% "casbah" % "2.8.0",
     "com.novus" %% "salat" % "1.9.9",
     "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",

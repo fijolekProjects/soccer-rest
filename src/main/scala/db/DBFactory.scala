@@ -15,10 +15,9 @@ class LeagueInfoRepository(private val db: MongoDB) {
   private val leagueInfoColl = db("leagueInfo")
   def createOrUpdateAll(infos: Seq[LeagueInfo]): Unit = {
     val infosToSave = infos.map(_.toDBObject)
-    infos.zip(infosToSave).foreach {
-      case (info, infotoDB) =>
-        val infoWithNaturalId = infotoDB ++ ("naturalId" -> info.naturalId)
-        leagueInfoColl.update(Map("naturalId" -> info.naturalId), infoWithNaturalId, upsert = true)
+    infos.zip(infosToSave).foreach { case (info, infoToSave) =>
+      val infoWithNaturalId = infoToSave ++ ("naturalId" -> info.naturalId)
+      leagueInfoColl.update(Map("naturalId" -> info.naturalId), infoWithNaturalId, upsert = true)
     }
   }
 

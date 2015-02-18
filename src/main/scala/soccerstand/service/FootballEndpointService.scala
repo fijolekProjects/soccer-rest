@@ -11,27 +11,23 @@ import akka.http.server.Directives._
 import akka.http.unmarshalling.Unmarshal
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
-import com.typesafe.config.ConfigFactory
 import db.{DBFactory, LeagueInfoRepository}
 import soccerstand.dto.FinishedGamesDto.LatestFinishedGamesDto
 import soccerstand.dto.GameDto
 import soccerstand.model._
 import soccerstand.parser.{SoccerstandContentParser, SoccerstandLeagueStandingsParser}
 import soccerstand.service.communication.SoccerstandCommunication
-import soccerstand.util.measure.Measureable
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)
-                      (implicit system: ActorSystem, executor: ExecutionContextExecutor, materializer: FlowMaterializer) extends Measureable {
-  
-  def config = ConfigFactory.load()
+class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit actorDeps: ActorDeps = ActorDeps.default) {
+  implicit val (system, executor, materializer) = actorDeps.unpack
   val logger = Logging(system, getClass)
 
   private lazy val communication = new SoccerstandCommunication(logger)
 
-  private def fetchSoccerstandContent: Future[LiveScores] = {
-    fetchSoccerstandData(communication.liveSource) { SoccerstandContentParser.parseLiveScores }
+  private def fetchSoccerstandContent: Future[TodayScores] = {
+    fetchSoccerstandData(communication.todaySource) { SoccerstandContentParser.parseLiveScores }
   }
 
   private def fetchSoccerstandLeagueStandings(country: String, leagueName: String): Future[LeagueStandings] = {
@@ -45,7 +41,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)
     }
   }
 
-  private def fetchSoccerstandLeagueResults(leagueInfo: LeagueInfo): Future[LiveScores] = {
+  private def fetchSoccerstandLeagueResults(leagueInfo: LeagueInfo): Future[TodayScores] = {
     fetchSoccerstandData(communication.leagueResultsSource(leagueInfo)) { leagueSoccerstandData =>
       SoccerstandContentParser.parseLiveScores(leagueSoccerstandData)
     }
@@ -72,7 +68,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)
     import soccerstand.service.protocols.JsonProtocol._
     logRequest("soccerstand-data-fetcher") {
       redirectToNoTrailingSlashIfPresent(Found) {
-        pathPrefix("live") {
+        pathPrefix("today") {
           (get & pathEnd){
             complete {
               ToResponseMarshallable { fetchSoccerstandContent.map { GameDto.fromLiveScores } }
@@ -110,11 +106,20 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)
 }
 
 object FootballEndpointService extends App {
-  implicit val system = ActorSystem()
-  implicit val executor = system.dispatcher
-  implicit val materializer = ActorFlowMaterializer()
+  implicit val actorDeps = ActorDeps.default
+  implicit val (system, executor, materializer) = actorDeps.unpack
   val leagueInfoRepository = new LeagueInfoRepository(DBFactory.getInstance)
   val footbalEnpoint = new FootballEndpoint(leagueInfoRepository)
 
   Http().bind(interface = "0.0.0.0", port = 9000).startHandlingWith(footbalEnpoint.routes)
+}
+
+class ActorDeps(system: ActorSystem, executor: ExecutionContextExecutor, materializer: FlowMaterializer) {
+  val unpack = (system, executor, materializer)
+}
+object ActorDeps {
+  implicit val system = ActorSystem()
+  implicit val executor = system.dispatcher
+  implicit val materializer = ActorFlowMaterializer()
+  def default = new ActorDeps(system, executor, materializer) 
 }

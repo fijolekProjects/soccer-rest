@@ -10,10 +10,11 @@ case class LeagueInfo(league: League, tournamentIds: TournamentIds, tournamentNu
   val leagueId = tournamentNumIds.tournamentId
   val seasonId = tournamentNumIds.tournamentPageSeasonResults
   val naturalId = createNaturalId(league.country.name, league.leagueName)
+  def countryName = league.country.name
 }
 object LeagueInfo {
   def createNaturalId(country: String, leagueName: String): String = {
-    country.withoutWhitespaces.toLowerCase + leagueName.withoutWhitespaces.toLowerCase
+    country.withoutWhitespaces.toLowerCase + leagueName.toLowerCase.normalizedLeagueName
   }
   def soccerstandResultsUrlPart(leagueInfo: LeagueInfo): String = leagueInfo.league.soccerstandResultsUrlPart
 }

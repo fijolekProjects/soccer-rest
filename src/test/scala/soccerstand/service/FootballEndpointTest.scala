@@ -27,16 +27,16 @@ class FootballEndpointTest extends FlatSpec with Matchers with ScalatestRouteTes
 
   val routes = footbalEnpoint.routes
   it should "return 200 for base routes" in {
-    Get(s"/live") ~> routes ~> check {
+    Get(s"/today") ~> routes ~> check {
       itWorks()
     }
-    Get(s"/live/germany/bundesliga") ~> routes ~> check {
-      itWorks()
-    }
-    Get(s"/standings/germany/bundesliga") ~> routes ~> check {
+    Get(s"/today/germany/bundesliga") ~> routes ~> check {
       itWorks()
     }
     Get(s"/latest/germany/bundesliga") ~> routes ~> check {
+      itWorks()
+    }
+    Get(s"/standings/germany/bundesliga") ~> routes ~> check {
       itWorks()
     }
   }

@@ -22,7 +22,7 @@ object SoccerstandContentParser {
     LatestFinishedGames(league, gamesGroupedByRound)
   }
   
-  def parseLiveScores(soccerstandData: String): LiveScores = {
+  def parseLiveScores(soccerstandData: String): TodayScores = {
     implicit val now = new Date()
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
     val leagueScores = inputSplittedByLeague.map { splittedByLeague =>
@@ -32,6 +32,6 @@ object SoccerstandContentParser {
       val games = gamesToParse.map { GameParser.parseGame }
       LeagueScores(league, games)
     }.toSeq
-    LiveScores(leagueScores)
+    TodayScores(leagueScores)
   }
 }

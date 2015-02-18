@@ -7,11 +7,11 @@ import soccerstand.parser.token.SoccerstandTokens._
 
 object Implicits {
   implicit class SoccerstandData(a: String) {
-    val endChar = '¬'
-    def readIntAt(i: Int) = a.substring(i).takeTillEndChar.toInt
-    def readDateAt(i: Int) = new Date(a.substring(i).takeTillEndChar.toLong * 1000)
-    def readDataAfterIdx(i: Int) = a.substring(i).takeTillEndChar
-    def takeTillEndChar = a.takeWhile(_ != endChar)
+    val endSign = '¬'
+    def readIntAt(i: Int) = a.substring(i).takeTillEndSign.toInt
+    def readDateAt(i: Int) = new Date(a.substring(i).takeTillEndSign.toLong * 1000)
+    def readDataAfterIdx(i: Int) = a.substring(i).takeTillEndSign
+    def takeTillEndSign = a.takeWhile(_ != endSign)
     def onlyUsefulData = a.replaceAll(s"$endOfUsefulData1(.*)", "").replaceAll(s"$endOfUsefulData2(.*)", "")
   }
   implicit class SplittedString(a: String) {
@@ -26,7 +26,8 @@ object Implicits {
   }
   implicit class RichString(s: String) {
     def withoutWhitespaces = s.replaceAll(" ", "")
+    def normalizedLeagueName = withoutSeasonSpecifics.withoutWhitespaces
     def whitespacesToDashes = s.replaceAll(" ", "-").replaceAll("---", "-").replaceAll("'", "-")
-    def withoutClausura = s.replace(" - clausura", "")
+    def withoutSeasonSpecifics = s.replaceAll(" -(.*)", "")
   }
 }

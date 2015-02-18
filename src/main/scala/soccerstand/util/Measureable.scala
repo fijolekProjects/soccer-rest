@@ -1,4 +1,4 @@
-package soccerstand.util.measure
+package soccerstand.util
 
 trait Measureable {
   def measure[T](actionName: String)(block: => T): T = {
