@@ -16,17 +16,18 @@ object LeagueInfoSaver extends Slf4jLogging with Measureable {
   import soccerstand.parser.token.SoccerstandTokens._
 
   val leagueInfoRepository = new LeagueInfoRepository(DBFactory.getInstance)
-  
-  def apply(): Unit = {
+
+  def main(args: Array[String]) {
     val basicInfoForAllLeagues = measure("fetching info for leagues from all countries") {
       val soccerstandIndexHtml = scala.io.Source.fromURL("http://www.soccerstand.com").mkString
       val countryIdPattern = s"""<li id="lmenu_($anyContent)">""".r
       val idsForAllCountries = countryIdPattern.findAllMatchIn(soccerstandIndexHtml).toList.map { _.group(1).toInt }
       assert(idsForAllCountries.nonEmpty, "no country ids was found!")
       info(s"countries to fetch data for: ${idsForAllCountries.size}")
-      idsForAllCountries.par.flatMap { collectDataForAllLeaguesWithinCountry }.seq
-    }
-    val orderedBasicInfoForAllLeagues = basicInfoForAllLeagues.sortBy { leagueInfo => leagueInfo.countryName }
+      idsForAllCountries.par.flatMap { collectDataForAllLeaguesWithinCountry }
+    }.seq
+    val leaguesWithoutDuplicates = basicInfoForAllLeagues.distinctBy { _.naturalId }
+    val orderedBasicInfoForAllLeagues = leaguesWithoutDuplicates.sortBy { _.countryName }
     measure(s"saving all base league data for ${orderedBasicInfoForAllLeagues.size} leagues") {
       leagueInfoRepository.createOrUpdateAll(orderedBasicInfoForAllLeagues)
     }

@@ -13,9 +13,12 @@ object SoccerstandContentParser {
 
   def parseLatestLeagueResults(soccerstandData: String): LatestFinishedGames = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
-    val splittedByGames = inputSplittedByLeague.head.split(newGame)
-    val (leagueToParse, gamesToParse) = (splittedByGames.head, splittedByGames.tail)
-    val leagueScores = gamesToParse.map { GameParser.parseFinishedGame }.toSeq
+    val leagueToParse = inputSplittedByLeague.head.split(newGame).head
+    val leagueScores = inputSplittedByLeague.flatMap { splittedByLeague =>
+      val splittedByGames = splittedByLeague.split(newGame)
+      val gamesToParse = splittedByGames.tail
+      gamesToParse.map { GameParser.parseFinishedGame }.toSeq
+    }.toSeq
     val league = League.fromString(leagueToParse)
     val roundOrder = leagueScores.map(_.round).distinct.zipWithIndex.toMap
     val gamesGroupedByRound = leagueScores.groupBy(_.round).toSeq.sortBy { case (roundd, _) => roundOrder(roundd) }

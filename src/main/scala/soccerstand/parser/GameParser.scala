@@ -5,6 +5,8 @@ import java.util.Date
 import soccerstand.indexes.{FinishedGameIndexes, GameIndexes}
 import soccerstand.model._
 
+import scala.util.Try
+
 object GameParser {
   import soccerstand.implicits.Implicits._
 
@@ -18,7 +20,7 @@ object GameParser {
     val homeClub = Club.fromIndexes(gameToParse, gameIndexes.homeClubIdx, gameIndexes.homeClubScoreIdx)
     val awayClub = Club.fromIndexes(gameToParse, gameIndexes.awayClubIdx, gameIndexes.awayClubScoreIdx)
     val startDate = gameToParse.readDateAt(gameIndexes.dateIdx)
-    val round = gameToParse.readDataAfterIdx(gameIndexes.roundIdx)
+    val round = Try { gameToParse.readDataAfterIdx(gameIndexes.roundIdx) }.getOrElse("")
     FinishedGame(homeClub, awayClub, startDate, round)
   }
 

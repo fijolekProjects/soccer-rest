@@ -41,7 +41,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
     }
   }
 
-  private def fetchSoccerstandLeagueResults(leagueInfo: LeagueInfo): Future[TodayScores] = {
+  private def fetchSoccerstandTodayLeagueResults(leagueInfo: LeagueInfo): Future[TodayScores] = {
     fetchSoccerstandData(communication.leagueResultsSource(leagueInfo)) { leagueSoccerstandData =>
       SoccerstandContentParser.parseLiveScores(leagueSoccerstandData)
     }
@@ -71,14 +71,14 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
         pathPrefix("today") {
           (get & pathEnd){
             complete {
-              ToResponseMarshallable { fetchSoccerstandContent.map { GameDto.fromLiveScores } }
+              ToResponseMarshallable { fetchSoccerstandContent.map { GameDto.fromTodayScores } }
             }
           } ~
           (get & pathPrefix(Segment) & pathSuffix(Segment)) { (country, leagueName) =>
             complete {
               val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
               ToResponseMarshallable {
-                fetchSoccerstandLeagueResults(leagueInfo).map { GameDto.fromLiveScores }
+                fetchSoccerstandTodayLeagueResults(leagueInfo).map { GameDto.fromTodayScores }
               }
             }
           }

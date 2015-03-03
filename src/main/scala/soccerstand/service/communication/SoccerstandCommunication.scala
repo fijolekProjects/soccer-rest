@@ -50,8 +50,7 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
 object SoccerstandCommunication {
   private val servers = Seq(
     "soccerstand.com",
-    "flashscore.com",
-    "scoreboard.com"
+    "flashscore.com"
   )
   def soccerstandBackendRoute = "d." + scala.util.Random.shuffle(servers).head
   def soccerstandFrontend = scala.util.Random.shuffle(servers).head

@@ -3,6 +3,7 @@ package db
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.{MongoClient, MongoDB}
 import soccerstand.model.LeagueInfo
+import soccerstand.util.Slf4jLogging
 
 object DBFactory {
   val getInstance: MongoDB = {
@@ -11,13 +12,15 @@ object DBFactory {
   }
 }
 
-class LeagueInfoRepository(private val db: MongoDB) {
-  private val leagueInfoColl = db("leagueInfo")
+class LeagueInfoRepository(private val db: MongoDB) extends Slf4jLogging {
+  private def leagueInfoColl = db("leagueInfo")
   def createOrUpdateAll(infos: Seq[LeagueInfo]): Unit = {
     val infosToSave = infos.map(_.toDBObject)
-    infos.zip(infosToSave).foreach { case (info, infoToSave) =>
-      val infoWithNaturalId = infoToSave ++ ("naturalId" -> info.naturalId)
-      leagueInfoColl.update(Map("naturalId" -> info.naturalId), infoWithNaturalId, upsert = true)
+    infos.zip(infosToSave).foreach { case (leagueInfo, infoToSave) =>
+      val infoWithNaturalId = infoToSave ++ ("naturalId" -> leagueInfo.naturalId)
+      val where = Map("naturalId" -> leagueInfo.naturalId, "league" -> Map("leagueName" -> leagueInfo.leagueName))
+      info(s"saving ${leagueInfo.naturalId}")
+      leagueInfoColl.update(where, infoWithNaturalId, upsert = true)
     }
   }
 

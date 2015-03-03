@@ -9,8 +9,9 @@ case class LeagueInfo(league: League, tournamentIds: TournamentIds, tournamentNu
   val countryCode = league.country.code
   val leagueId = tournamentNumIds.tournamentId
   val seasonId = tournamentNumIds.tournamentPageSeasonResults
-  val naturalId = createNaturalId(league.country.name, league.leagueName)
+  val naturalId = createNaturalId(league.country.name, leagueName)
   def countryName = league.country.name
+  def leagueName = league.leagueName
 }
 object LeagueInfo {
   def createNaturalId(country: String, leagueName: String): String = {
