@@ -6,8 +6,15 @@ import soccerstand.model.{Club, LatestFinishedGames, League}
 
 object FinishedGamesDto {
   type Round = String
-  case class LatestFinishedGamesDto(league: League, gamesWithRound: Seq[RoundGames])
-  case class RoundGames(round: Round, games: Seq[FinishedGameDto])
+  case class LatestFinishedGamesDto(league: League, gamesWithRound: Seq[RoundGames]) {
+    def sortByDateLatestFirst: LatestFinishedGamesDto =  {
+      val gamesLatestFirst = gamesWithRound.sortBy(games => games.latestGameDate.getTime)(Ordering[Long].reverse)
+      copy(gamesWithRound = gamesLatestFirst)
+    }
+  }
+  case class RoundGames(round: Round, games: Seq[FinishedGameDto]) {
+    def latestGameDate = games.map(_.startDate).max
+  }
   case class FinishedGameDto(homeClub: Club, awayClub: Club, startDate: Date)
 
   object LatestFinishedGamesDto {

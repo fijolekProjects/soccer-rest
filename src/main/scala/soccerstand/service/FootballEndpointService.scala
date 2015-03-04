@@ -11,11 +11,12 @@ import akka.http.server.Directives._
 import akka.http.unmarshalling.Unmarshal
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
-import db.{DBFactory, LeagueInfoRepository}
+import db.DBFactory
+import db.repository.LeagueInfoRepository
 import soccerstand.dto.FinishedGamesDto.LatestFinishedGamesDto
 import soccerstand.dto.GameDto
 import soccerstand.model._
-import soccerstand.parser.{SoccerstandContentParser, SoccerstandLeagueStandingsParser}
+import soccerstand.parser.SoccerstandContentParser
 import soccerstand.service.communication.SoccerstandCommunication
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -37,12 +38,12 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
 
   private def fetchSoccerstandLeagueStandings(leagueInfo: LeagueInfo): Future[LeagueStandings] = {
     fetchSoccerstandData(communication.standingsSource(leagueInfo.tournamentIds)) { response =>
-      SoccerstandLeagueStandingsParser.parseLeagueStandings(leagueInfo.league, response)
+      SoccerstandContentParser.parseLeagueStandings(leagueInfo.league, response)
     }
   }
 
   private def fetchSoccerstandTodayLeagueResults(leagueInfo: LeagueInfo): Future[TodayScores] = {
-    fetchSoccerstandData(communication.leagueResultsSource(leagueInfo)) { leagueSoccerstandData =>
+    fetchSoccerstandData(communication.todayLeagueResultsSource(leagueInfo)) { leagueSoccerstandData =>
       SoccerstandContentParser.parseLiveScores(leagueSoccerstandData)
     }
   }
@@ -95,7 +96,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
             complete {
               val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
               ToResponseMarshallable {
-                fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto }
+                fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto(_).sortByDateLatestFirst }
               }
             }
           }

@@ -25,7 +25,7 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
     Source.single(soccerstandReq).via(soccerstandFlow)
   }
 
-  def leagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
+  def todayLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
     val backendRoute = soccerstandBackendRoute
     val soccerstandReq = withSoccerstandHeader {
       RequestBuilding.Get(s"/x/feed/t_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_1_en_1/")

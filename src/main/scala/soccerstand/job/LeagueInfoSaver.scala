@@ -2,7 +2,8 @@ package soccerstand.job
 
 import java.net.URL
 
-import db.{DBFactory, LeagueInfoRepository}
+import db.DBFactory
+import db.repository.LeagueInfoRepository
 import soccerstand.indexes.LeagueInfoIndexes
 import soccerstand.model.{League, LeagueInfo, TournamentIds, TournamentNumIds}
 import soccerstand.parser.SoccerstandDataParser
@@ -26,10 +27,9 @@ object LeagueInfoSaver extends Slf4jLogging with Measureable {
       info(s"countries to fetch data for: ${idsForAllCountries.size}")
       idsForAllCountries.par.flatMap { collectDataForAllLeaguesWithinCountry }
     }.seq
-    val leaguesWithoutDuplicates = basicInfoForAllLeagues.distinctBy { _.naturalId }
-    val orderedBasicInfoForAllLeagues = leaguesWithoutDuplicates.sortBy { _.countryName }
-    measure(s"saving all base league data for ${orderedBasicInfoForAllLeagues.size} leagues") {
-      leagueInfoRepository.createOrUpdateAll(orderedBasicInfoForAllLeagues)
+    val leaguesWithoutDuplicates = basicInfoForAllLeagues.distinctBy { league => league.naturalId + league.leagueName}
+    measure(s"saving all base league data for ${leaguesWithoutDuplicates.size} leagues") {
+      leagueInfoRepository.createOrUpdateAll(leaguesWithoutDuplicates)
     }
   }
 

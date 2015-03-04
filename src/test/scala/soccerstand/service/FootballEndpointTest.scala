@@ -3,7 +3,7 @@ package soccerstand.service
 import akka.http.model.ContentTypes._
 import akka.http.model.StatusCodes._
 import akka.http.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import db.LeagueInfoRepository
+import db.repository.LeagueInfoRepository
 import org.mockito.Mockito.when
 import org.scalatest._
 import org.scalatest.mock.MockitoSugar
@@ -19,13 +19,12 @@ class FootballEndpointTest extends FlatSpec with Matchers with ScalatestRouteTes
     tournamentIds = TournamentIds("M1VFOdWr", "pYi5cMuA"),
     tournamentNumIds = TournamentNumIds(160, 160)
   )
-
   val leagueInfoRepository = mock[LeagueInfoRepository]
   when(leagueInfoRepository.findByNaturalId("germany", "bundesliga")).thenReturn(bundesligaLeagueInfo)
   
-  val footbalEnpoint = new FootballEndpoint(leagueInfoRepository)
+  val footballEndpoint = new FootballEndpoint(leagueInfoRepository)
 
-  val routes = footbalEnpoint.routes
+  val routes = footballEndpoint.routes
   it should "return 200 for base routes" in {
     Get(s"/today") ~> routes ~> check {
       itWorks()
