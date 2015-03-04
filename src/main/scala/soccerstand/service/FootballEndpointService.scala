@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.Http
 import akka.http.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.marshalling.ToResponseMarshallable
+import akka.http.marshalling._
 import akka.http.model.HttpResponse
 import akka.http.model.StatusCodes._
 import akka.http.server.Directives._
@@ -27,13 +27,46 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
 
   private lazy val communication = new SoccerstandCommunication(logger)
 
-  private def fetchSoccerstandContent: Future[TodayScores] = {
-    fetchSoccerstandData(communication.todaySource) { SoccerstandContentParser.parseLiveScores }
+  val routes = {
+    import soccerstand.service.protocols.JsonProtocol._
+    logRequest("soccerstand-data-fetcher") {
+      redirectToNoTrailingSlashIfPresent(Found) {
+        pathPrefix("today") {
+          (get & pathEnd){
+            complete {
+              ToResponseMarshallable { fetchSoccerstandContent.map { GameDto.fromTodayScores } }
+            }
+          } ~
+            getUserLeagueInfoAndCompleteWith { leagueInfo =>
+              fetchSoccerstandTodayLeagueResults(leagueInfo).map { GameDto.fromTodayScores }
+            }
+        } ~
+          pathPrefix("standings") {
+            getUserLeagueInfoAndCompleteWith { fetchSoccerstandLeagueStandings  }
+          } ~
+          pathPrefix("latest") {
+            getUserLeagueInfoAndCompleteWith { leagueInfo =>
+              fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto(_).latestFirst }
+            }
+          } ~
+          pathPrefix("topscorers") {
+            getUserLeagueInfoAndCompleteWith { fetchSoccerstandTopScorers }
+          }
+      }
+    }
+  }
+  
+  private def getUserLeagueInfoAndCompleteWith[T: ToResponseMarshaller](f: LeagueInfo => T) = {
+    (get & pathPrefix(Segment) & pathSuffix(Segment)) { (country, leagueName) =>
+      complete {
+        val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
+        ToResponseMarshallable { f(leagueInfo) }
+      }
+    }
   }
 
-  private def fetchSoccerstandLeagueStandings(country: String, leagueName: String): Future[LeagueStandings] = {
-    val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
-    fetchSoccerstandLeagueStandings(leagueInfo)
+  private def fetchSoccerstandContent: Future[TodayScores] = {
+    fetchSoccerstandData(communication.todaySource) { SoccerstandContentParser.parseLiveScores }
   }
 
   private def fetchSoccerstandLeagueStandings(leagueInfo: LeagueInfo): Future[LeagueStandings] = {
@@ -67,54 +100,6 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
           Unmarshal(response.entity).to[String].map { mapResponse }
         case _ =>
           throw new RuntimeException(s"unexpected happenned: ${response.status}")
-      }
-    }
-  }
-
-  val routes = {
-    import soccerstand.service.protocols.JsonProtocol._
-    logRequest("soccerstand-data-fetcher") {
-      redirectToNoTrailingSlashIfPresent(Found) {
-        pathPrefix("today") {
-          (get & pathEnd){
-            complete {
-              ToResponseMarshallable { fetchSoccerstandContent.map { GameDto.fromTodayScores } }
-            }
-          } ~
-          (get & pathPrefix(Segment) & pathSuffix(Segment)) { (country, leagueName) =>
-            complete {
-              val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
-              ToResponseMarshallable {
-                fetchSoccerstandTodayLeagueResults(leagueInfo).map { GameDto.fromTodayScores }
-              }
-            }
-          }
-        } ~
-        pathPrefix("standings") {
-          (get & pathPrefix(Segment) & path(Segment)) { (country, leagueName) =>
-            complete {
-              ToResponseMarshallable { fetchSoccerstandLeagueStandings(country, leagueName) }
-            }
-          }
-        } ~
-        pathPrefix("latest") {
-          (get & pathPrefix(Segment) & path(Segment)) { (country, leagueName) =>
-            complete {
-              val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
-              ToResponseMarshallable {
-                fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto(_).sortByDateLatestFirst }
-              }
-            }
-          }
-        } ~
-        pathPrefix("topscorers") {
-          (get & pathPrefix(Segment) & path(Segment)) { (country, leagueName) =>
-            complete {
-              val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
-              ToResponseMarshallable { fetchSoccerstandTopScorers(leagueInfo) }
-            }
-          }
-        }
       }
     }
   }

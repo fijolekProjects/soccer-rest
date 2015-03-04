@@ -7,7 +7,7 @@ import soccerstand.model.{Club, LatestFinishedGames, League}
 object FinishedGamesDto {
   type Round = String
   case class LatestFinishedGamesDto(league: League, gamesWithRound: Seq[RoundGames]) {
-    def sortByDateLatestFirst: LatestFinishedGamesDto =  {
+    def latestFirst: LatestFinishedGamesDto =  {
       val gamesLatestFirst = gamesWithRound.sortBy(games => games.latestGameDate.getTime)(Ordering[Long].reverse)
       copy(gamesWithRound = gamesLatestFirst)
     }
