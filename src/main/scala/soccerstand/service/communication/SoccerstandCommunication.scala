@@ -13,23 +13,17 @@ import soccerstand.service.communication.SoccerstandCommunication._
 class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: ActorSystem) {
 
   def todaySource: Source[HttpResponse] = {
-    soccerstandRequestViaFlow {
-      RequestBuilding.Get("/x/feed/f_1_0_1_en_1/")
-    }
+    SoccerstandRequest.Get("/x/feed/f_1_0_1_en_1/")
   }
 
   def standingsSource(tournamentIds: TournamentIds): Source[HttpResponse] = {
-    soccerstandRequestViaFlow {
-      val tournamentPart = buildTournamentRequestPart(tournamentIds)
-      RequestBuilding.Get(s"/x/feed/ss_4_${tournamentPart}_table_overall/")
-    }
+    val tournamentPart = buildTournamentRequestPart(tournamentIds)
+    SoccerstandRequest.Get(s"/x/feed/ss_4_${tournamentPart}_table_overall/")
   }
   
   def topScorersSource(tournamentIds: TournamentIds): Source[HttpResponse] = {
-    soccerstandRequestViaFlow {
-      val tournamentPart = buildTournamentRequestPart(tournamentIds)
-      RequestBuilding.Get(s"/x/feed/ss_1_${tournamentPart}_top_scorers_")
-    }
+    val tournamentPart = buildTournamentRequestPart(tournamentIds)
+    SoccerstandRequest.Get(s"/x/feed/ss_1_${tournamentPart}_top_scorers_")
   }
 
   private def buildTournamentRequestPart(tournamentIds: TournamentIds): String = {
@@ -37,21 +31,23 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
   }
 
   def todayLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
-    soccerstandRequestViaFlow {
-      RequestBuilding.Get(s"/x/feed/t_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_1_en_1/")
-    }
+    SoccerstandRequest.Get(s"/x/feed/t_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_1_en_1/")
   }
   
   def latestLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
     val urlPath = s"/x/feed/tr_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_${leagueInfo.seasonId}_0_1_en_1/"
-    soccerstandRequestViaFlow { RequestBuilding.Get(urlPath) }
+    SoccerstandRequest.Get(urlPath)
   }
 
-  private def soccerstandRequestViaFlow(req: HttpRequest): Source[HttpResponse] = {
-    val reqWithHeader = req.addHeader(RawHeader("X-Fsign", "SW9D1eZo"))
-    val route = soccerstandBackendRoute
-    logger.info(s"external service request: $route${reqWithHeader.uri}")
-    Source.single(reqWithHeader).via(Http().outgoingConnection(route).flow)
+  object SoccerstandRequest {
+    val Get = GetDef _
+    private def GetDef(uri: String): Source[HttpResponse] = {
+      val req = RequestBuilding.Get(uri)
+      val reqWithHeader = req.addHeader(RawHeader("X-Fsign", "SW9D1eZo"))
+      val route = soccerstandBackendRoute
+      logger.info(s"external service request: $route${reqWithHeader.uri}")
+      Source.single(reqWithHeader).via(Http().outgoingConnection(route).flow)
+    }
   }
 }
 
