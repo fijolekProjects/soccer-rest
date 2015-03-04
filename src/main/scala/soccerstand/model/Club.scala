@@ -4,9 +4,9 @@ import soccerstand.implicits.Implicits._
 
 case class Club(name: String, goals: Option[Int])
 object Club {
-  def fromIndexes(gameToParse: String, clubIdx: Int, clubScoreIdx: Int): Club = {
+  def fromIndexes(gameToParse: String, clubIdx: Int, clubScoreIdx: Option[Int]): Club = {
     val clubName = gameToParse.readDataAfterIdx(clubIdx)
-    val clubScore = if (clubScoreIdx == -1) None else Some(gameToParse.readIntAt(clubScoreIdx))
+    val clubScore = clubScoreIdx.map(gameToParse.readIntAt)
     Club(clubName, clubScore)
   }
 }

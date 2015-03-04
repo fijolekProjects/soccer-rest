@@ -7,6 +7,7 @@ import soccerstand.parser.token.SoccerstandTokens._
 
 import scala.collection.IterableLike
 import scala.collection.generic.CanBuildFrom
+import scala.xml.{NodeSeq, Node}
 
 object Implicits {
   implicit class SoccerstandData(a: String) {
@@ -32,9 +33,26 @@ object Implicits {
     def normalizedLeagueName = withoutSeasonSpecifics.withoutWhitespaces
     def whitespacesToDashes = s.replaceAll(" ", "-").replaceAll("---", "-").replaceAll("'", "-")
     def withoutSeasonSpecifics = s.replaceAll(" -(.*)", "")
+    def withoutParens = s.replaceAll("[()]", "")
+    def withoutWhitespacesAtFrontAndBack = {
+      val head = s.head.toString
+      val last = s.last.toString
+      (head, last) match {
+        case (" ", _) => s.tail
+        case (_, " ") => s.init
+        case (" ", " ") => s.drop(1).dropRight(1)
+        case _ => s
+      }
+    }
   }
   implicit class HtmlString(h: String) {
     def wrapInDiv = s"<div>$h</div>"
+    def dataInsideTagRegex = s"(?i)<$h([^>]+)>(.+?)</$h>".r
+    def withoutNbsp = h.replaceAll("&nbsp;", "")
+  }
+  
+  implicit class MatchSummaryXml(xml: NodeSeq) {
+    def getTextFromClass(htmlClass: String) = xml.find { n => n \@ "class" == htmlClass}.get.text
   }
   
   implicit class RichCollection[A, Repr](xs: IterableLike[A, Repr]){

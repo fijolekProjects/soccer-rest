@@ -66,40 +66,42 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
   }
 
   private def fetchSoccerstandContent: Future[TodayScores] = {
-    fetchSoccerstandData(communication.todaySource) { SoccerstandContentParser.parseLiveScores }
+    communication.todaySource.fetchSoccerstandData { SoccerstandContentParser.parseLiveScores }
   }
 
   private def fetchSoccerstandLeagueStandings(leagueInfo: LeagueInfo): Future[LeagueStandings] = {
-    fetchSoccerstandData(communication.standingsSource(leagueInfo.tournamentIds)) { response =>
+    communication.standingsSource(leagueInfo.tournamentIds).fetchSoccerstandData { response =>
       SoccerstandContentParser.parseLeagueStandings(leagueInfo.league, response)
     }
   }
 
   private def fetchSoccerstandTopScorers(leagueInfo: LeagueInfo): Future[TopScorers] = {
-    fetchSoccerstandData(communication.topScorersSource(leagueInfo.tournamentIds)) { response =>
+    communication.topScorersSource(leagueInfo.tournamentIds).fetchSoccerstandData { response =>
       SoccerstandContentParser.parseTopScorers(leagueInfo.league, response)
     }
   }
 
   private def fetchSoccerstandTodayLeagueResults(leagueInfo: LeagueInfo): Future[TodayScores] = {
-    fetchSoccerstandData(communication.todayLeagueResultsSource(leagueInfo)) { leagueSoccerstandData =>
+    communication.todayLeagueResultsSource(leagueInfo).fetchSoccerstandData { leagueSoccerstandData =>
       SoccerstandContentParser.parseLiveScores(leagueSoccerstandData)
     }
   }
 
   private def fetchSoccerstandLatestLeagueResults(leagueInfo: LeagueInfo): Future[LatestFinishedGames] = {
-    fetchSoccerstandData(communication.latestLeagueResultsSource(leagueInfo)) { latestLeagueSoccerstandData =>
+    communication.latestLeagueResultsSource(leagueInfo).fetchSoccerstandData { latestLeagueSoccerstandData =>
       SoccerstandContentParser.parseLatestLeagueResults(latestLeagueSoccerstandData)
     }
   }
-
-  private def fetchSoccerstandData[T](source: Source[HttpResponse])(mapResponse: String => T): Future[T] = {
-    source.runWith(Sink.head).flatMap { response =>
-      response.status match {
-        case OK =>
-          Unmarshal(response.entity).to[String].map { mapResponse }
-        case _ =>
-          throw new RuntimeException(s"unexpected happenned: ${response.status}")
+  
+  implicit class SoccerstandSource(source: Source[HttpResponse]) {
+    def fetchSoccerstandData[T](mapResponse: String => T): Future[T] = {
+      source.runWith(Sink.head).flatMap { response =>
+        response.status match {
+          case OK =>
+            Unmarshal(response.entity).to[String].map { mapResponse }
+          case _ =>
+            throw new RuntimeException(s"unexpected happenned: ${response.status}")
+        }
       }
     }
   }

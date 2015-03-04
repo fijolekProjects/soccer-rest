@@ -45,7 +45,7 @@ object SoccerstandContentParser {
     val allTdTagsPattern = "<td.*".r
     val splittedByClubs = allTdTagsPattern.findAllMatchIn(leagueHtmlData).map(_.toString()).toList
     val standings = splittedByClubs.map { clubData =>
-      val tdTagPattern = s"(?i)<td([^>]+)>($anyContent)</td>".r
+      val tdTagPattern = "td".dataInsideTagRegex
       val clubInfo = tdTagPattern.findAllMatchIn(clubData).toList
       val clubHtmlData = XML.loadString(clubInfo.mkString("\n").wrapInDiv)
       val clubDataExtracted = (clubHtmlData \\ "td").take(8).map(_.text).toVector

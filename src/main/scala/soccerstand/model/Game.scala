@@ -6,7 +6,7 @@ import soccerstand.dto.FinishedGamesDto.Round
 
 case class TodayGame(homeClub: Club, awayClub: Club, status: GameStatus, startDate: Date, elapsedMinutes: Option[Int])
 
-case class FinishedGame(homeClub: Club, awayClub: Club, startDate: Date, round: String)
+case class FinishedGame(id: String, homeClub: Club, awayClub: Club, startDate: Date, round: String)
 case class LatestFinishedGames(league: League, gamesWithRound: Seq[(Round, Seq[FinishedGame])])
 
 sealed trait GameStatus

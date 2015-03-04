@@ -15,14 +15,14 @@ object FinishedGamesDto {
   case class RoundGames(round: Round, games: Seq[FinishedGameDto]) {
     def latestGameDate = games.map(_.startDate).max
   }
-  case class FinishedGameDto(homeClub: Club, awayClub: Club, startDate: Date)
+  case class FinishedGameDto(id: String, homeClub: Club, awayClub: Club, startDate: Date)
 
   object LatestFinishedGamesDto {
     def toDto(finishedGames: LatestFinishedGames): LatestFinishedGamesDto = {
       val league = finishedGames.league
       val gamesWithRound = finishedGames.gamesWithRound.map {
         case (round, games) =>
-          val finishedGamesDto = games.map { game => FinishedGameDto(game.homeClub, game.awayClub, game.startDate) }
+          val finishedGamesDto = games.map { game => FinishedGameDto(game.id, game.homeClub, game.awayClub, game.startDate) }
           RoundGames(round, finishedGamesDto)
       }
       LatestFinishedGamesDto(league, gamesWithRound)
