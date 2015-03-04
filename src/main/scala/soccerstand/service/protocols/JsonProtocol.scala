@@ -20,16 +20,20 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   implicit val finishedGameDto = jsonFormat3(FinishedGameDto.apply)
   implicit val roundGames = jsonFormat2(RoundGames.apply)
   implicit val latestFinishedGamesDto = jsonFormat2(LatestFinishedGamesDto.apply)
+  implicit val playerScoresFormat = jsonFormat6(PlayerScores.apply)
+  implicit val topScorers = jsonFormat2(TopScorers.apply)
 
-  implicit object GameStatusFormat extends RootJsonFormat[GameStatus] {
-    override def read(json: JsValue): GameStatus = ???
-    override def write(obj: GameStatus): JsValue = JsString(obj.getClass.getSimpleName.init)
+  implicit object GameStatusFormat extends CaseObjectFormat[GameStatus]
+  implicit object PlayerPositionFormat extends CaseObjectFormat[PlayerPosition]
+
+  trait CaseObjectFormat[T] extends RootJsonFormat[T] {
+    override def read(json: JsValue): T = ???
+    override def write(obj: T): JsValue = JsString(obj.getClass.getSimpleName.init)
   }
+
   implicit object DateJsonFormat extends RootJsonFormat[Date] {
     override def read(json: JsValue): Date = ???
-    override def write(obj: Date): JsValue = {
-      JsString(obj.toString)
-    }
+    override def write(obj: Date): JsValue = JsString(obj.toString)
   }
 }
 

@@ -33,6 +33,9 @@ object Implicits {
     def whitespacesToDashes = s.replaceAll(" ", "-").replaceAll("---", "-").replaceAll("'", "-")
     def withoutSeasonSpecifics = s.replaceAll(" -(.*)", "")
   }
+  implicit class HtmlString(h: String) {
+    def wrapInDiv = s"<div>$h</div>"
+  }
   
   implicit class RichCollection[A, Repr](xs: IterableLike[A, Repr]){
     def distinctBy[B, That](f: A => B)(implicit cbf: CanBuildFrom[Repr, A, That]) = {

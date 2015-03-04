@@ -17,10 +17,10 @@ object ClubStanding {
     val draws = values(4).toInt
     val losses = values(5).toInt
     val goals = values(6).split(":")
-    val goalScored = goals.head.toInt
+    val goalsScored = goals.head.toInt
     val goalsConcealed = goals.last.toInt
     val points = values(7).toInt
-    ClubStanding(rank, team, matchesPlayed, wins, draws, losses, goalScored, goalsConcealed, points)
+    ClubStanding(rank, team, matchesPlayed, wins, draws, losses, goalsScored, goalsConcealed, points)
   }
 }
 

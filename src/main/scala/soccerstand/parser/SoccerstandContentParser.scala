@@ -47,11 +47,19 @@ object SoccerstandContentParser {
     val standings = splittedByClubs.map { clubData =>
       val tdTagPattern = s"(?i)<td([^>]+)>($anyContent)</td>".r
       val clubInfo = tdTagPattern.findAllMatchIn(clubData).toList
-      val clubHtmlData = XML.loadString("<div>" + clubInfo.mkString("\n") + "</div>")
+      val clubHtmlData = XML.loadString(clubInfo.mkString("\n").wrapInDiv)
       val clubDataExtracted = (clubHtmlData \\ "td").take(8).map(_.text).toVector
       ClubStanding.fromTdValues(clubDataExtracted)
     }.toList
     LeagueStandings(league, standings)
+  }
+
+  def parseTopScorers(league: League, htmlTopScorersData: String): TopScorers = {
+    val topScorers = htmlTopScorersData.replaceFirst("<tfoot>(.+?)</span>", "</tbody>")
+    val topScorersXml = XML.loadString(topScorers.wrapInDiv)
+    val playerRows = topScorersXml \\ "tbody" \ "tr"
+    val scorers = playerRows.map { PlayerScores.fromHtmlPlayerRow }
+    TopScorers(league, scorers)
   }
 
 }

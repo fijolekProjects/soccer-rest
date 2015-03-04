@@ -11,39 +11,47 @@ import soccerstand.model.{LeagueInfo, TournamentIds}
 import soccerstand.service.communication.SoccerstandCommunication._
 
 class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: ActorSystem) {
-  private def soccerstandFlow = Http().outgoingConnection(soccerstandBackendRoute).flow
 
   def todaySource: Source[HttpResponse] = {
-    val soccerstandReq = withSoccerstandHeader { RequestBuilding.Get("/x/feed/f_1_0_1_en_1/") }
-    Source.single(soccerstandReq).via(soccerstandFlow)
+    soccerstandRequestViaFlow {
+      RequestBuilding.Get("/x/feed/f_1_0_1_en_1/")
+    }
   }
 
   def standingsSource(tournamentIds: TournamentIds): Source[HttpResponse] = {
-    val soccerstandReq = withSoccerstandHeader {
-      RequestBuilding.Get(s"/x/feed/ss_4_${tournamentIds.tournamentIdString}_${tournamentIds.tournamentStageId}_table_overall/")
+    soccerstandRequestViaFlow {
+      val tournamentPart = buildTournamentRequestPart(tournamentIds)
+      RequestBuilding.Get(s"/x/feed/ss_4_${tournamentPart}_table_overall/")
     }
-    Source.single(soccerstandReq).via(soccerstandFlow)
+  }
+  
+  def topScorersSource(tournamentIds: TournamentIds): Source[HttpResponse] = {
+    soccerstandRequestViaFlow {
+      val tournamentPart = buildTournamentRequestPart(tournamentIds)
+      RequestBuilding.Get(s"/x/feed/ss_1_${tournamentPart}_top_scorers_")
+    }
+  }
+
+  private def buildTournamentRequestPart(tournamentIds: TournamentIds): String = {
+    s"${tournamentIds.tournamentIdString}_${tournamentIds.tournamentStageId}"
   }
 
   def todayLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
-    val backendRoute = soccerstandBackendRoute
-    val soccerstandReq = withSoccerstandHeader {
+    soccerstandRequestViaFlow {
       RequestBuilding.Get(s"/x/feed/t_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_1_en_1/")
     }
-    //DOIT think about logging fetched urls
-    logger.info(s"fetching data from: $backendRoute${soccerstandReq.uri}")
-    Source.single(soccerstandReq).via(Http().outgoingConnection(backendRoute).flow)
   }
-
+  
   def latestLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
     val urlPath = s"/x/feed/tr_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_${leagueInfo.seasonId}_0_1_en_1/"
-    val soccerstandReq = withSoccerstandHeader { RequestBuilding.Get(urlPath) }
-    logger.info(s"info for: ${leagueInfo.league}, hitting to: $urlPath")
-    Source.single(soccerstandReq).via(Http().outgoingConnection(soccerstandBackendRoute).flow)
+    soccerstandRequestViaFlow { RequestBuilding.Get(urlPath) }
   }
 
-  private def withSoccerstandHeader(req: => HttpRequest): HttpRequest = {
-    req.addHeader(RawHeader("X-Fsign", "SW9D1eZo"))
+  private def soccerstandRequestViaFlow(req: HttpRequest): Source[HttpResponse] = {
+    val reqWithHeader = req.addHeader(RawHeader("X-Fsign", "SW9D1eZo"))
+    val route = soccerstandBackendRoute
+    logger.info(s"external service request: $route${reqWithHeader.uri}")
+    Source.single(reqWithHeader).via(Http().outgoingConnection(route).flow)
   }
 }
 

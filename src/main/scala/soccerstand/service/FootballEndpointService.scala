@@ -42,6 +42,12 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
     }
   }
 
+  private def fetchSoccerstandTopScorers(leagueInfo: LeagueInfo): Future[TopScorers] = {
+    fetchSoccerstandData(communication.topScorersSource(leagueInfo.tournamentIds)) { response =>
+      SoccerstandContentParser.parseTopScorers(leagueInfo.league, response)
+    }
+  }
+
   private def fetchSoccerstandTodayLeagueResults(leagueInfo: LeagueInfo): Future[TodayScores] = {
     fetchSoccerstandData(communication.todayLeagueResultsSource(leagueInfo)) { leagueSoccerstandData =>
       SoccerstandContentParser.parseLiveScores(leagueSoccerstandData)
@@ -98,6 +104,14 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
               ToResponseMarshallable {
                 fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto(_).sortByDateLatestFirst }
               }
+            }
+          }
+        } ~
+        pathPrefix("topscorers") {
+          (get & pathPrefix(Segment) & path(Segment)) { (country, leagueName) =>
+            complete {
+              val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
+              ToResponseMarshallable { fetchSoccerstandTopScorers(leagueInfo) }
             }
           }
         }
