@@ -26,6 +26,10 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
     SoccerstandRequest.Get(s"/x/feed/ss_1_${tournamentPart}_top_scorers_")
   }
 
+  def matchSummarySource(matchId: String): Source[HttpResponse] = {
+    SoccerstandRequest.Get(s"/x/feed/d_su_${matchId}_en_1/")
+  }
+
   private def buildTournamentRequestPart(tournamentIds: TournamentIds): String = {
     s"${tournamentIds.tournamentIdString}_${tournamentIds.tournamentStageId}"
   }
@@ -53,8 +57,8 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
 
 object SoccerstandCommunication {
   private val servers = Seq(
-    "soccerstand.com",
-    "flashscore.com"
+    "soccerstand.com"/*,
+    "flashscore.com"*/
   )
   def soccerstandBackendRoute = "d." + scala.util.Random.shuffle(servers).head
   def soccerstandFrontend = scala.util.Random.shuffle(servers).head

@@ -18,10 +18,11 @@ object PlayerScores {
   }
 }
 sealed trait PlayerPosition
-case object Defender extends PlayerPosition
-case object Midfielder extends PlayerPosition
-case object Forward extends PlayerPosition
 object PlayerPosition {
+  case object Defender extends PlayerPosition
+  case object Midfielder extends PlayerPosition
+  case object Forward extends PlayerPosition
+
   def fromString(s: String): Option[PlayerPosition] = s match {
     case "Defender" => Some(Defender)
     case "Midfielder" => Some(Midfielder)

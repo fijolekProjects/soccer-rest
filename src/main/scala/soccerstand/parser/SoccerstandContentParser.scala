@@ -5,6 +5,8 @@ import java.util.Date
 import db.DBFactory
 import db.repository.LeagueInfoRepository
 import soccerstand.model._
+import soccerstand.parser.matchsummary.MatchSummaryParser
+import soccerstand.parser.matchsummary.MatchSummaryParser.MatchSummary
 
 import scala.xml.XML
 
@@ -62,4 +64,10 @@ object SoccerstandContentParser {
     TopScorers(league, scorers)
   }
 
+  def parseMatchSummary(htmlMatchSummaryData: String): MatchSummary = {
+    val matchSummaryFromTableRegex = "table".dataInsideTagRegex
+    val matchSummaryFromTable = matchSummaryFromTableRegex.findFirstIn(htmlMatchSummaryData).get.withoutNbsp
+    val matchSummaryAsHtml = XML.loadString(matchSummaryFromTable)
+    MatchSummaryParser.parseMatchSummary(matchSummaryAsHtml)
+  }
 }

@@ -24,3 +24,5 @@ libraryDependencies ++= {
 resolvers += "snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 resolvers += "releases"  at "https://oss.sonatype.org/content/groups/scala-tools"
+
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")

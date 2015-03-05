@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import soccerstand.parser.token.SoccerstandTokens._
 
-import scala.collection.IterableLike
+import scala.collection.{SeqLike, IterableLike}
 import scala.collection.generic.CanBuildFrom
 import scala.xml.{NodeSeq, Node}
 
@@ -38,11 +38,16 @@ object Implicits {
       val head = s.head.toString
       val last = s.last.toString
       (head, last) match {
+        case (" ", " ") => s.drop(1).dropRight(1)
         case (" ", _) => s.tail
         case (_, " ") => s.init
-        case (" ", " ") => s.drop(1).dropRight(1)
         case _ => s
       }
+    }
+    def separateAt(sign: String): (String, String) = {
+      val (left, right) = s.splitAt(s.indexOf(sign))
+      val rightWithoutSign = right.drop(sign.size)
+      (left, rightWithoutSign)
     }
   }
   implicit class HtmlString(h: String) {
@@ -52,7 +57,8 @@ object Implicits {
   }
   
   implicit class MatchSummaryXml(xml: NodeSeq) {
-    def getTextFromClass(htmlClass: String) = xml.find { n => n \@ "class" == htmlClass}.get.text
+    def getTextFromClass(htmlClass: String): String = findTextFromClass(htmlClass).get
+    def findTextFromClass(htmlClass: String): Option[String] = xml.find { n => (n \@ "class").contains(htmlClass) }.map(_.text)
   }
   
   implicit class RichCollection[A, Repr](xs: IterableLike[A, Repr]){
@@ -69,6 +75,11 @@ object Implicits {
         }
       }
       builder.result()
+    }
+  }
+  implicit class StringCollection[Repr](xs: SeqLike[String, Repr]) {
+    def containsElemWithPartOf(searchedString: String): Boolean = {
+      xs.exists { elem => elem.contains(searchedString) }
     }
   }
 }

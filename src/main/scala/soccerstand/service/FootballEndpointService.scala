@@ -17,6 +17,7 @@ import soccerstand.dto.FinishedGamesDto.LatestFinishedGamesDto
 import soccerstand.dto.GameDto
 import soccerstand.model._
 import soccerstand.parser.SoccerstandContentParser
+import soccerstand.parser.matchsummary.MatchSummaryParser.MatchSummary
 import soccerstand.service.communication.SoccerstandCommunication
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -41,17 +42,22 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
               fetchSoccerstandTodayLeagueResults(leagueInfo).map { GameDto.fromTodayScores }
             }
         } ~
-          pathPrefix("standings") {
-            getUserLeagueInfoAndCompleteWith { fetchSoccerstandLeagueStandings  }
-          } ~
-          pathPrefix("latest") {
-            getUserLeagueInfoAndCompleteWith { leagueInfo =>
-              fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto(_).latestFirst }
-            }
-          } ~
-          pathPrefix("topscorers") {
-            getUserLeagueInfoAndCompleteWith { fetchSoccerstandTopScorers }
+        pathPrefix("standings") {
+          getUserLeagueInfoAndCompleteWith { fetchSoccerstandLeagueStandings  }
+        } ~
+        pathPrefix("latest") {
+          getUserLeagueInfoAndCompleteWith { leagueInfo =>
+            fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto(_).latestFirst }
           }
+        } ~
+        pathPrefix("topscorers") {
+          getUserLeagueInfoAndCompleteWith { fetchSoccerstandTopScorers }
+        } ~
+        pathPrefix("summary") {
+          (get & pathSuffix(Segment)) { matchId =>
+            complete { ToResponseMarshallable(fetchSoccerstandMatchSummary(matchId)) }
+          }
+        }
       }
     }
   }
@@ -92,7 +98,13 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
       SoccerstandContentParser.parseLatestLeagueResults(latestLeagueSoccerstandData)
     }
   }
-  
+
+  private def fetchSoccerstandMatchSummary(matchId: String): Future[MatchSummary] = {
+    communication.matchSummarySource(matchId).fetchSoccerstandData { response =>
+      SoccerstandContentParser.parseMatchSummary(response)
+    }
+  }
+
   implicit class SoccerstandSource(source: Source[HttpResponse]) {
     def fetchSoccerstandData[T](mapResponse: String => T): Future[T] = {
       source.runWith(Sink.head).flatMap { response =>
