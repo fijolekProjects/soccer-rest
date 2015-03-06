@@ -3,14 +3,11 @@ package soccerstand.parser
 import java.util.Date
 
 import soccerstand.indexes.{FinishedGameIndexes, GameIndexes}
-import soccerstand.model.GameStatus.{Finished, Scheduled, Live}
+import soccerstand.model.GameStatus.{Finished, Live, Scheduled}
 import soccerstand.model._
-import soccerstand.parser.matchsummary.MatchSummaryParser
-import soccerstand.parser.matchsummary.MatchSummaryParser.MatchSummary
 import soccerstand.parser.token.SoccerstandTokens.gameId
 
 import scala.util.Try
-import scala.xml.XML
 
 object GameParser {
   import soccerstand.implicits.Implicits._

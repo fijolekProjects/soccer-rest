@@ -1,6 +1,6 @@
 package soccerstand.parser.matchsummary.extractors
 
-import soccerstand.parser.matchsummary.MatchSummaryParser._
+import soccerstand.parser.matchsummary.model.MatchEvent._
 
 object EventsExtractors {
   import soccerstand.implicits.Implicits._

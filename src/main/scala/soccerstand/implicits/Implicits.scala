@@ -5,9 +5,9 @@ import java.util.concurrent.TimeUnit
 
 import soccerstand.parser.token.SoccerstandTokens._
 
-import scala.collection.{SeqLike, IterableLike}
 import scala.collection.generic.CanBuildFrom
-import scala.xml.{NodeSeq, Node}
+import scala.collection.{IterableLike, SeqLike}
+import scala.xml.NodeSeq
 
 object Implicits {
   implicit class SoccerstandData(a: String) {

@@ -4,7 +4,7 @@ import java.util.Date
 
 import soccerstand.model._
 import soccerstand.parser.matchsummary.MatchSummaryParser
-import soccerstand.parser.matchsummary.MatchSummaryParser.MatchSummary
+import soccerstand.parser.matchsummary.model.MatchEvent.MatchSummary
 
 import scala.xml.XML
 

@@ -1,10 +1,12 @@
 package soccerstand.parser.matchsummary
 
-import soccerstand.parser.matchsummary.MatchSummaryParser.MatchEventType.{AwayTeamEvent, HomeTeamEvent}
 import soccerstand.parser.matchsummary.extractors.EventsExtractors._
+import soccerstand.parser.matchsummary.model.MatchEvent
+import soccerstand.parser.matchsummary.model.MatchEvent.MatchEventType.{AwayTeamEvent, HomeTeamEvent}
+import soccerstand.parser.matchsummary.model.MatchEvent.{MatchEventType, MatchSummary}
 
 import scala.collection.immutable.Seq
-import scala.xml.{Node, Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq}
 
 object MatchSummaryParser {
   import soccerstand.implicits.Implicits._
@@ -36,56 +38,10 @@ object MatchSummaryParser {
 
   private def makeEventsTyped(events: NodeSeq): Seq[MatchEvent] = events.map {
     case YellowCardExtractor(yellowCardEvent)             => yellowCardEvent
+    case SubstitutionExtractor(subsEvent)                 => subsEvent
     case SecondYellowCardExtractor(secondYellowCardEvent) => secondYellowCardEvent
+    case MissedPenaltyExtractor(missedPenaltyEvent)       => missedPenaltyEvent
     case ScoredPenaltyExtractor(scoredPenaltyEvent)       => scoredPenaltyEvent
     case GoalExtractor(goalEvent)                         => goalEvent
-    case SubstitutionExtractor(subsEvent)                 => subsEvent
-    case MissedPenaltyExtractor(missedPenaltyEvent)       => missedPenaltyEvent
-  }
-
-  sealed trait MatchEventType
-  object MatchEventType {
-    case object HomeTeamEvent extends MatchEventType
-    case object AwayTeamEvent extends MatchEventType
-  }
-
-  case class MatchSummary(homeTeam: Seq[MatchEvent], awayTeam: Seq[MatchEvent])
-
-  case class YellowCard       (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent
-  case class SecondYellowCard (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent
-  case class RedCard          (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent
-  case class Substitution     (playerIn: String,  playerOut: String,          minute: MatchMinute) extends MatchEvent
-  case class Goal             (player: String,    assistBy: Option[String],   minute: MatchMinute) extends MatchEvent
-  case class MissedPenalty    (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
-  case class ScoredPenalty    (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
-
-  case class MatchMinute(minute: Int, extraTime: Option[Int]) {
-    def prettyPrint = extraTime match {
-      case Some(extra) => s"$minute+$extra"
-      case None => s"$minute"
-    }
-  }
-  object MatchMinute {
-    def fromMatchEvent(matchEvent: Node): MatchMinute = {
-      val minute = (matchEvent \\ "div").getTextFromClass("time-box").init
-      MatchMinute.fromString(minute)
-    }
-
-    private def fromString(minute: String) = {
-      val minuteInExtraTime = minute.contains("+")
-      if (!minuteInExtraTime) MatchMinute(minute.toInt, None)
-      else {
-        val (regularTime, extraTime) = minute.separateAt("+")
-        MatchMinute(regularTime.toInt, Some(extraTime.toInt))
-      }
-    }
-  }
-
-  sealed trait PenaltyMatchEvent extends MatchEvent {
-    val player: String
-  }
-
-  sealed trait MatchEvent {
-    val minute: MatchMinute
   }
 }

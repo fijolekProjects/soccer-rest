@@ -1,7 +1,8 @@
 package soccerstand.parser.matchsummary.extractors
 
 import soccerstand.implicits.Implicits._
-import soccerstand.parser.matchsummary.MatchSummaryParser._
+import soccerstand.parser.matchsummary.model.MatchEvent
+import soccerstand.parser.matchsummary.model.MatchEvent.{MatchMinute, PenaltyMatchEvent}
 
 import scala.xml.Node
 

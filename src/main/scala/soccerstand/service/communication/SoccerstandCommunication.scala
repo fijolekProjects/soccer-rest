@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.Http
 import akka.http.client.RequestBuilding
+import akka.http.model.HttpResponse
 import akka.http.model.headers.RawHeader
-import akka.http.model.{HttpRequest, HttpResponse}
 import akka.stream.scaladsl.Source
 import soccerstand.model.{LeagueInfo, TournamentIds}
 import soccerstand.service.communication.SoccerstandCommunication._

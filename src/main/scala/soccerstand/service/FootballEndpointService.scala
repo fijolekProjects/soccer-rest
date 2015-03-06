@@ -17,7 +17,7 @@ import soccerstand.dto.FinishedGamesDto.LatestFinishedGamesDto
 import soccerstand.dto.GameDto
 import soccerstand.model._
 import soccerstand.parser.SoccerstandContentParser
-import soccerstand.parser.matchsummary.MatchSummaryParser.MatchSummary
+import soccerstand.parser.matchsummary.model.MatchEvent.MatchSummary
 import soccerstand.service.communication.SoccerstandCommunication
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -29,8 +29,8 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
   private lazy val communication = new SoccerstandCommunication(logger)
 
   val routes = {
-    import soccerstand.service.protocols.JsonProtocol._
     logRequest("soccerstand-data-fetcher") {
+      import soccerstand.service.protocols.JsonProtocol._
       redirectToNoTrailingSlashIfPresent(Found) {
         pathPrefix("today") {
           (get & pathEnd){

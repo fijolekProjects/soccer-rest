@@ -5,7 +5,8 @@ import java.util.Date
 import soccerstand.dto.FinishedGamesDto.{FinishedGameDto, LatestFinishedGamesDto, RoundGames}
 import soccerstand.dto.GameDto
 import soccerstand.model._
-import soccerstand.parser.matchsummary.MatchSummaryParser._
+import soccerstand.parser.matchsummary.model.MatchEvent
+import soccerstand.parser.matchsummary.model.MatchEvent._
 import spray.json._
 
 object JsonProtocol extends DefaultJsonProtocol with NullOptions {
