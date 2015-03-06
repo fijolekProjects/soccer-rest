@@ -2,8 +2,6 @@ package soccerstand.parser
 
 import java.util.Date
 
-import db.DBFactory
-import db.repository.LeagueInfoRepository
 import soccerstand.model._
 import soccerstand.parser.matchsummary.MatchSummaryParser
 import soccerstand.parser.matchsummary.MatchSummaryParser.MatchSummary
@@ -13,8 +11,6 @@ import scala.xml.XML
 object SoccerstandContentParser {
   import soccerstand.implicits.Implicits._
   import soccerstand.parser.token.SoccerstandTokens._
-
-  val leagueInfoRepository = new LeagueInfoRepository(DBFactory.getInstance)
 
   def parseLatestLeagueResults(soccerstandData: String): LatestFinishedGames = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)

@@ -20,43 +20,83 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   implicit val playerScoresFormat = jsonFormat6(PlayerScores.apply)
   implicit val topScorers = jsonFormat2(TopScorers.apply)
 
-  implicit val matchMinute = jsonFormat2(MatchMinute.apply)
-  implicit val yellowCard = jsonFormat3(YellowCard.apply)
-  implicit val secondYellowCard = jsonFormat3(SecondYellowCard.apply)
-  implicit val redCard = jsonFormat3(RedCard.apply)
-  implicit val substitution = jsonFormat3(Substitution.apply)
-  implicit val goal = jsonFormat3(Goal.apply)
-  implicit val missedPenalty = jsonFormat2(MissedPenalty.apply)
+  implicit object MatchMinuteFormat extends JsonWriteFormat[MatchMinute] {
+    override def write(obj: MatchMinute): JsValue = JsString(obj.prettyPrint)
+  }
+
+  trait MatchEventFormatWriter[T <: MatchEvent] extends JsonWriteFormat[T] {
+    val writer: RootJsonFormat[T]
+    val eventName: String
+    override def write(obj: T): JsValue =
+      JsObject(Map("event" -> JsString(eventName)) ++ writer.write(obj).asJsObject.fields)
+  }
+
+  object YellowCardFormat extends MatchEventFormatWriter[YellowCard] {
+    override val writer = jsonFormat3(YellowCard.apply)
+    override val eventName: String = "yellow card"
+  }
+
+  object SecondYellowCardFormat extends MatchEventFormatWriter[SecondYellowCard] {
+    override val writer = jsonFormat3(SecondYellowCard.apply)
+    override val eventName: String = "second yellow card"
+  }
+
+  object RedCardFormat extends MatchEventFormatWriter[RedCard] {
+    override val writer = jsonFormat3(RedCard.apply)
+    override val eventName: String = "red card"
+  }
+
+  object SubstitutionFormat extends MatchEventFormatWriter[Substitution] {
+    override val writer = jsonFormat3(Substitution.apply)
+    override val eventName: String = "substitution"
+  }
+
+  object GoalFormat extends MatchEventFormatWriter[Goal] {
+    override val writer = jsonFormat3(Goal.apply)
+    override val eventName: String = "goal"
+  }
+
+  object MissedPenaltyFormat extends MatchEventFormatWriter[MissedPenalty] {
+    override val writer = jsonFormat2(MissedPenalty.apply)
+    override val eventName: String = "missed penalty"
+  }
+
+  object ScoredPenaltyFormat extends MatchEventFormatWriter[ScoredPenalty] {
+    override val writer = jsonFormat2(ScoredPenalty.apply)
+    override val eventName: String = "scored penalty"
+  }
 
   implicit val matchSummary = jsonFormat2(MatchSummary.apply)
   implicit object MatchEventFormat extends RootJsonFormat[MatchEvent] {
     override def read(json: JsValue): MatchEvent = ???
     override def write(obj: MatchEvent): JsValue = obj match {
-      case o: YellowCard => yellowCard.write(o)
-      case o: SecondYellowCard => secondYellowCard.write(o)
-      case o: RedCard => redCard.write(o)
-      case o: Substitution => substitution.write(o)
-      case o: Goal => goal.write(o)
-      case o: MissedPenalty => missedPenalty.write(o)
+      case o: YellowCard => YellowCardFormat.write(o)
+      case o: SecondYellowCard => SecondYellowCardFormat.write(o)
+      case o: RedCard => RedCardFormat.write(o)
+      case o: Substitution => SubstitutionFormat.write(o)
+      case o: Goal => GoalFormat.write(o)
+      case o: MissedPenalty => MissedPenaltyFormat.write(o)
+      case o: ScoredPenalty => ScoredPenaltyFormat.write(o)
     }
   }
 
   implicit object GameStatusFormat extends CaseObjectFormat[GameStatus]
   implicit object PlayerPositionFormat extends CaseObjectFormat[PlayerPosition]
 
-  trait CaseObjectFormat[T] extends RootJsonFormat[T] {
-    override def read(json: JsValue): T = ???
+  trait CaseObjectFormat[T] extends JsonWriteFormat[T] {
     override def write(obj: T): JsValue = JsString(obj.getClass.getSimpleName.init)
   }
 
-  implicit object DateJsonFormat extends RootJsonFormat[Date] {
-    override def read(json: JsValue): Date = ???
+  implicit object DateJsonFormat extends JsonWriteFormat[Date] {
     override def write(obj: Date): JsValue = JsString(obj.toString)
   }
   
-  implicit object CountryFormat extends RootJsonFormat[Country] {
-    override def read(json: JsValue): Country = ???
+  implicit object CountryFormat extends JsonWriteFormat[Country] {
     override def write(obj: Country): JsValue = obj.name.toJson
+  }
+
+  trait JsonWriteFormat[T] extends RootJsonFormat[T] {
+    override def read(json: JsValue): T = ???
   }
 }
 

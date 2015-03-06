@@ -3,6 +3,7 @@ package soccerstand.service
 import akka.http.model.ContentTypes._
 import akka.http.model.StatusCodes._
 import akka.http.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.http.unmarshalling.Unmarshal
 import db.repository.LeagueInfoRepository
 import org.mockito.Mockito.when
 import org.scalatest._
@@ -11,7 +12,7 @@ import soccerstand.model._
 
 import scala.concurrent.duration._
 
-class FootballEndpointTest extends FlatSpec with Matchers with ScalatestRouteTest with MockitoSugar {
+class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRouteTest with MockitoSugar {
   implicit val timeout = RouteTestTimeout(10.second)
 
   val bundesligaLeagueInfo = LeagueInfo(
@@ -21,26 +22,46 @@ class FootballEndpointTest extends FlatSpec with Matchers with ScalatestRouteTes
   )
   val leagueInfoRepository = mock[LeagueInfoRepository]
   when(leagueInfoRepository.findByNaturalId("germany", "bundesliga")).thenReturn(bundesligaLeagueInfo)
-  
+
   val footballEndpoint = new FootballEndpoint(leagueInfoRepository)
 
   val routes = footballEndpoint.routes
-  it should "return 200 for base routes" in {
-    Get(s"/today") ~> routes ~> check {
-      itWorks()
+
+  feature("service should return 200 for basic routes") {
+    scenario("today route") {
+      Get(s"/today") ~> routes ~> check {
+        itWorks()
+      }
     }
-    Get(s"/today/germany/bundesliga") ~> routes ~> check {
-      itWorks()
+
+    scenario("return 200 for today league route") {
+      Get(s"/today/germany/bundesliga") ~> routes ~> check {
+        itWorks()
+      }
     }
-    Get(s"/latest/germany/bundesliga") ~> routes ~> check {
-      itWorks()
+
+    scenario("return 200 for today latest route") {
+      Get(s"/latest/germany/bundesliga") ~> routes ~> check {
+        itWorks()
+      }
     }
-    Get(s"/standings/germany/bundesliga") ~> routes ~> check {
-      itWorks()
+
+    scenario("return 200 for standings latest route") {
+      Get(s"/standings/germany/bundesliga") ~> routes ~> check {
+        itWorks()
+      }
+    }
+
+    scenario("return 200 for summary match route") {
+      val manCityVsBarcelonaMatchId = "M57DXCbA"
+      Get(s"/summary/$manCityVsBarcelonaMatchId") ~> routes ~> check {
+        itWorks()
+      }
     }
   }
 
   private def itWorks(): Unit = {
+    println(Unmarshal(response.entity).to[String])
     status shouldBe OK
     contentType shouldBe `application/json`
   }
