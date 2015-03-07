@@ -1,6 +1,7 @@
 package soccerstand.parser.matchsummary.model
 
 import soccerstand.implicits.Implicits._
+import soccerstand.model.Match
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchMinute
 
 import scala.collection.immutable.Seq
@@ -13,7 +14,7 @@ object MatchEvent {
     case object AwayTeamEvent extends MatchEventType
   }
 
-  case class MatchSummary(homeTeam: Seq[MatchEvent], awayTeam: Seq[MatchEvent])
+  case class MatchEvents(homeTeam: Seq[MatchEvent], awayTeam: Seq[MatchEvent])
 
   case class YellowCard       (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent
   case class SecondYellowCard (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent

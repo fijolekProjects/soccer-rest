@@ -1,5 +1,6 @@
 package soccerstand.implicits
 
+import java.net.{URLConnection, URL}
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
@@ -10,6 +11,7 @@ import scala.collection.{IterableLike, SeqLike}
 import scala.xml.NodeSeq
 
 object Implicits {
+  //DOIT it should be value class
   implicit class SoccerstandData(a: String) {
     val endSign = '¬'
     def readIntAt(i: Int) = a.substring(i).takeTillEndSign.toInt
@@ -49,16 +51,34 @@ object Implicits {
       val rightWithoutSign = right.drop(sign.size)
       (left, rightWithoutSign)
     }
+    def dataAfter(sign: Char) = {
+      val lastWhitespaceIndex = s.lastIndexOf(sign)
+      s.drop(lastWhitespaceIndex + 1).withoutWhitespacesAtFrontAndBack
+    }
+
   }
   implicit class HtmlString(h: String) {
     def wrapInDiv = s"<div>$h</div>"
-    def dataInsideTagRegex = s"(?i)<$h([^>]+)>(.+?)</$h>".r
+    def dataInsideTagRegex = s"(?i)<$h.*?>(.+?)</$h>".r
     def withoutNbsp = h.replaceAll("&nbsp;", "")
   }
-  
+
+  //DOIT it should be value class
   implicit class MatchSummaryXml(xml: NodeSeq) {
     def getTextFromClass(htmlClass: String): String = findTextFromClass(htmlClass).get
     def findTextFromClass(htmlClass: String): Option[String] = xml.find { n => (n \@ "class").contains(htmlClass) }.map(_.text)
+  }
+
+  implicit class RichUrl(url: URL) {
+    def setRequestProp(key: String, value: String): URLConnection = {
+      val req = url.openConnection
+      req.setRequestProperty(key, value)
+      req
+    }
+  }
+
+  implicit class RichUrlConnection(urlConnection: URLConnection) {
+    def makeGetRequest(): String = scala.io.Source.fromInputStream(urlConnection.getInputStream).mkString
   }
   
   implicit class RichCollection[A, Repr](xs: IterableLike[A, Repr]){

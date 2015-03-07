@@ -9,4 +9,8 @@ object Club {
     val clubScore = clubScoreIdx.map(gameToParse.readIntAt)
     Club(clubName, clubScore)
   }
+  def fromClubScoreIdx(gameToParse: String, clubName: String, clubScoreIdx: Option[Int]): Club = {
+    val clubScore = clubScoreIdx.map(gameToParse.readIntAt)
+    Club(clubName, clubScore)
+  }
 }

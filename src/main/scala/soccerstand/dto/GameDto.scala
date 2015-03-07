@@ -2,9 +2,9 @@ package soccerstand.dto
 
 import java.util.Date
 
-import soccerstand.model.{Club, GameStatus, League, TodayScores}
+import soccerstand.model._
 
-case class GameDto(id: String, league: League, homeClub: Club, awayClub: Club, status: GameStatus, startDate: Date, elapsedMinutes: Option[Int])
+case class GameDto(id: String, league: League, homeClub: Club, awayClub: Club, status: MatchStatus, startDate: Date, elapsedMinutes: Option[Int])
 
 object GameDto {
   def fromTodayScores(soccerstandContent: TodayScores): Seq[GameDto] = {

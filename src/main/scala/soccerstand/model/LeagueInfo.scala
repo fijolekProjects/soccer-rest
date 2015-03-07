@@ -2,7 +2,7 @@ package soccerstand.model
 
 import db.ConvertableToDBObject
 import soccerstand.implicits.Implicits._
-import soccerstand.indexes.LeagueInfoIndexes
+import soccerstand.indexes.TournamentIdsIndexes
 import soccerstand.model.LeagueInfo._
 
 case class LeagueInfo(league: League, tournamentIds: TournamentIds, tournamentNumIds: TournamentNumIds) extends ConvertableToDBObject {
@@ -22,7 +22,7 @@ object LeagueInfo {
 
 case class TournamentIds(tournamentIdString: String, tournamentStageId: String)
 object TournamentIds {
-  def fromString(leagueInfoToParse: String, leagueInfoIndexes: LeagueInfoIndexes): TournamentIds = {
+  def fromString(leagueInfoToParse: String, leagueInfoIndexes: TournamentIdsIndexes): TournamentIds = {
     val tournamentId = leagueInfoToParse.readDataAfterIdx(leagueInfoIndexes.tournamentIdIdx)
     val tournamentStageId = leagueInfoToParse.readDataAfterIdx(leagueInfoIndexes.tournamentStageIdIdx)
     TournamentIds(tournamentId, tournamentStageId)

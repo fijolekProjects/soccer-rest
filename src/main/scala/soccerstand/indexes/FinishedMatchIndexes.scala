@@ -2,10 +2,10 @@ package soccerstand.indexes
 
 import soccerstand.parser.token.SoccerstandTokens._
 
-case class FinishedGameIndexes(homeClubIdx: Int, homeClubScoreIdx: Option[Int], awayClubIdx: Int, awayClubScoreIdx: Option[Int], dateIdx: Int, roundIdx: Int)
-object FinishedGameIndexes extends ParsingIndexes {
-  val zero = FinishedGameIndexes(-1, None, -1, None, -1, -1)
-  type I = FinishedGameIndexes
+case class FinishedMatchIndexes(homeClubIdx: Int, homeClubScoreIdx: Option[Int], awayClubIdx: Int, awayClubScoreIdx: Option[Int], dateIdx: Int, roundIdx: Int)
+object FinishedMatchIndexes extends ParsingIndexes {
+  val zero = FinishedMatchIndexes(-1, None, -1, None, -1, -1)
+  type I = FinishedMatchIndexes
   val mappings = Seq(
     (homeClub, (idx: Int, idxs: I) => idxs.copy(homeClubIdx = idx)),
     (awayClub, (idx: Int, idxs: I) => idxs.copy(awayClubIdx = idx)),

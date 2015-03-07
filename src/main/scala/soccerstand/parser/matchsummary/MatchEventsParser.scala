@@ -3,19 +3,19 @@ package soccerstand.parser.matchsummary
 import soccerstand.parser.matchsummary.extractors.EventsExtractors._
 import soccerstand.parser.matchsummary.model.MatchEvent
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchEventType.{AwayTeamEvent, HomeTeamEvent}
-import soccerstand.parser.matchsummary.model.MatchEvent.{MatchEventType, MatchSummary}
+import soccerstand.parser.matchsummary.model.MatchEvent.{MatchEventType, MatchEvents}
 
 import scala.collection.immutable.Seq
 import scala.xml.{Elem, NodeSeq}
 
-object MatchSummaryParser {
+object MatchEventsParser {
   import soccerstand.implicits.Implicits._
 
-  def parseMatchSummary(matchSummaryAsHtml: Elem): MatchSummary = {
+  def parseMatchEvents(matchSummaryAsHtml: Elem): MatchEvents = {
     val matchEvents = allMatchEvents(matchSummaryAsHtml)
     val matchEventsByType = groupEventsByType(matchEvents)
     val typedMatchEvents = matchEventsByType.mapValues { makeEventsTyped }
-    MatchSummary(typedMatchEvents.getOrElse(HomeTeamEvent, Seq()), typedMatchEvents.getOrElse(AwayTeamEvent, Seq()))
+    MatchEvents(typedMatchEvents.getOrElse(HomeTeamEvent, Seq()), typedMatchEvents.getOrElse(AwayTeamEvent, Seq()))
   }
 
   private def allMatchEvents(matchSummaryAsHtml: Elem): NodeSeq = {

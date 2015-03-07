@@ -4,7 +4,7 @@ import java.net.URL
 
 import db.DBFactory
 import db.repository.LeagueInfoRepository
-import soccerstand.indexes.LeagueInfoIndexes
+import soccerstand.indexes.TournamentIdsIndexes
 import soccerstand.model.{League, LeagueInfo, TournamentIds, TournamentNumIds}
 import soccerstand.parser.SoccerstandDataParser
 import soccerstand.service.communication.SoccerstandCommunication._
@@ -35,9 +35,7 @@ object LeagueInfoSaver extends Slf4jLogging with Measureable {
 
   private def collectDataForAllLeaguesWithinCountry(countryId: Int): Seq[LeagueInfo] = {
     val allLeaguesWithinCountryUrl = s"http://$soccerstandBackendRoute/x/feed/c_1_${countryId}_1_en_y_1"
-    val req = new URL(allLeaguesWithinCountryUrl).openConnection
-    req.setRequestProperty("X-Fsign", "SW9D1eZo")
-    val matchesForAllLeaguesWithinCountry = scala.io.Source.fromInputStream(req.getInputStream).mkString
+    val matchesForAllLeaguesWithinCountry = new URL(allLeaguesWithinCountryUrl).setRequestProp("X-Fsign", "SW9D1eZo").makeGetRequest()
     infoBlock(s"collecting data for $countryId") {
       parseSoccerstandLeagueInfo(matchesForAllLeaguesWithinCountry)
     }
@@ -64,7 +62,7 @@ object LeagueInfoSaver extends Slf4jLogging with Measureable {
   private def findTournamentNumIdsForLeague(league: League): Option[TournamentNumIds] = {
     val urlPart = league.soccerstandResultsUrlPart
     val soccerstandResultsHtmlDataForLeague = Try {
-      scala.io.Source.fromURL(s"http://www.$soccerstandFrontend/soccer/$urlPart/results/").mkString
+      scala.io.Source.fromURL(s"http://$soccerstandFrontendRoute/soccer/$urlPart/results/").mkString
     }.toOption
     soccerstandResultsHtmlDataForLeague.map(tournamentNumIdsForLeague)
   }
@@ -78,7 +76,7 @@ object LeagueInfoSaver extends Slf4jLogging with Measureable {
   }
 
   private def parseTournamentIds(leagueToParse: String): TournamentIds = {
-    SoccerstandDataParser.parse(leagueToParse)(LeagueInfoIndexes) { leagueInfoIndexes =>
+    SoccerstandDataParser.parse(leagueToParse)(TournamentIdsIndexes) { leagueInfoIndexes =>
       TournamentIds.fromString(leagueToParse, leagueInfoIndexes)
     }
   }

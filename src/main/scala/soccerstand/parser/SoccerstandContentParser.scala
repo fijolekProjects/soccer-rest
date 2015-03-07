@@ -3,8 +3,9 @@ package soccerstand.parser
 import java.util.Date
 
 import soccerstand.model._
-import soccerstand.parser.matchsummary.MatchSummaryParser
-import soccerstand.parser.matchsummary.model.MatchEvent.MatchSummary
+import soccerstand.parser.matchsummary.MatchEventsParser
+import soccerstand.parser.matchsummary.model.MatchEvent.MatchEvents
+import soccerstand.parser.matchsummary.model.MatchSummary
 
 import scala.xml.XML
 
@@ -12,18 +13,18 @@ object SoccerstandContentParser {
   import soccerstand.implicits.Implicits._
   import soccerstand.parser.token.SoccerstandTokens._
 
-  def parseLatestLeagueResults(soccerstandData: String): LatestFinishedGames = {
+  def parseLatestLeagueResults(soccerstandData: String): LatestFinishedMatches = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
     val leagueToParse = inputSplittedByLeague.head.split(newGame).head
     val leagueScores = inputSplittedByLeague.flatMap { splittedByLeague =>
       val splittedByGames = splittedByLeague.split(newGame)
       val gamesToParse = splittedByGames.tail
-      gamesToParse.map { GameParser.parseFinishedGame }.toSeq
+      gamesToParse.map { MatchParser.parseFinishedMatch }.toSeq
     }.toSeq
     val league = League.fromString(leagueToParse)
     val roundOrder = leagueScores.map(_.round).distinct.zipWithIndex.toMap
     val gamesGroupedByRound = leagueScores.groupBy(_.round).toSeq.sortBy { case (roundd, _) => roundOrder(roundd) }
-    LatestFinishedGames(league, gamesGroupedByRound)
+    LatestFinishedMatches(league, gamesGroupedByRound)
   }
   
   def parseLiveScores(soccerstandData: String): TodayScores = {
@@ -33,7 +34,7 @@ object SoccerstandContentParser {
       val splittedByGames = splittedByLeague.split(newGame)
       val (leagueToParse, gamesToParse) = (splittedByGames.head, splittedByGames.tail)
       val league = League.fromString(leagueToParse)
-      val games = gamesToParse.map { GameParser.parseGame }
+      val games = gamesToParse.map { MatchParser.parseMatch }
       LeagueScores(league, games)
     }.toSeq
     TodayScores(leagueScores)
@@ -60,10 +61,16 @@ object SoccerstandContentParser {
     TopScorers(league, scorers)
   }
 
-  def parseMatchSummary(htmlMatchSummaryData: String): MatchSummary = {
+  def parseMatchSummary(matchId: String, htmlMatchSummaryData: String, dataFromMatchId: String, matchHtmlPage: String): MatchSummary = {
+    val matchInfo = MatchParser.parseMatchFromId(matchId, dataFromMatchId, matchHtmlPage)
+    val matchEvents = parseMatchEvents(htmlMatchSummaryData)
+    MatchSummary(matchInfo, matchEvents)
+  }
+
+  private def parseMatchEvents(htmlMatchSummaryData: String): MatchEvents = {
     val matchSummaryFromTableRegex = "table".dataInsideTagRegex
     val matchSummaryFromTable = matchSummaryFromTableRegex.findFirstIn(htmlMatchSummaryData).get.withoutNbsp
     val matchSummaryAsHtml = XML.loadString(matchSummaryFromTable)
-    MatchSummaryParser.parseMatchSummary(matchSummaryAsHtml)
+    MatchEventsParser.parseMatchEvents(matchSummaryAsHtml)
   }
 }

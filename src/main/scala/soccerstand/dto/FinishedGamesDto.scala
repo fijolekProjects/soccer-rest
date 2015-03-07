@@ -2,7 +2,7 @@ package soccerstand.dto
 
 import java.util.Date
 
-import soccerstand.model.{Club, LatestFinishedGames, League}
+import soccerstand.model.{Club, LatestFinishedMatches, League}
 
 object FinishedGamesDto {
   type Round = String
@@ -18,9 +18,9 @@ object FinishedGamesDto {
   case class FinishedGameDto(id: String, homeClub: Club, awayClub: Club, startDate: Date)
 
   object LatestFinishedGamesDto {
-    def toDto(finishedGames: LatestFinishedGames): LatestFinishedGamesDto = {
+    def toDto(finishedGames: LatestFinishedMatches): LatestFinishedGamesDto = {
       val league = finishedGames.league
-      val gamesWithRound = finishedGames.gamesWithRound.map {
+      val gamesWithRound = finishedGames.matchesWithRound.map {
         case (round, games) =>
           val finishedGamesDto = games.map { game => FinishedGameDto(game.id, game.homeClub, game.awayClub, game.startDate) }
           RoundGames(round, finishedGamesDto)

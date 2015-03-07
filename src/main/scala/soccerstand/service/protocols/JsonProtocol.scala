@@ -5,8 +5,8 @@ import java.util.Date
 import soccerstand.dto.FinishedGamesDto.{FinishedGameDto, LatestFinishedGamesDto, RoundGames}
 import soccerstand.dto.GameDto
 import soccerstand.model._
-import soccerstand.parser.matchsummary.model.MatchEvent
 import soccerstand.parser.matchsummary.model.MatchEvent._
+import soccerstand.parser.matchsummary.model.{MatchEvent, MatchSummary}
 import spray.json._
 
 object JsonProtocol extends DefaultJsonProtocol with NullOptions {
@@ -67,7 +67,11 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
     override val eventName: String = "scored penalty"
   }
 
+  implicit val matchEvents = jsonFormat2(MatchEvents.apply)
+  // DOIT need league information - gameDto should be instad of matchFormat
+  implicit val matchFormat = jsonFormat6(Match.apply)
   implicit val matchSummary = jsonFormat2(MatchSummary.apply)
+
   implicit object MatchEventFormat extends RootJsonFormat[MatchEvent] {
     override def read(json: JsValue): MatchEvent = ???
     override def write(obj: MatchEvent): JsValue = obj match {
@@ -81,7 +85,7 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
     }
   }
 
-  implicit object GameStatusFormat extends CaseObjectFormat[GameStatus]
+  implicit object GameStatusFormat extends CaseObjectFormat[MatchStatus]
   implicit object PlayerPositionFormat extends CaseObjectFormat[PlayerPosition]
 
   trait CaseObjectFormat[T] extends JsonWriteFormat[T] {

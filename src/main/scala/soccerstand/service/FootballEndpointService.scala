@@ -17,7 +17,7 @@ import soccerstand.dto.FinishedGamesDto.LatestFinishedGamesDto
 import soccerstand.dto.GameDto
 import soccerstand.model._
 import soccerstand.parser.SoccerstandContentParser
-import soccerstand.parser.matchsummary.model.MatchEvent.MatchSummary
+import soccerstand.parser.matchsummary.model.MatchSummary
 import soccerstand.service.communication.SoccerstandCommunication
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -93,16 +93,18 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
     }
   }
 
-  private def fetchSoccerstandLatestLeagueResults(leagueInfo: LeagueInfo): Future[LatestFinishedGames] = {
+  private def fetchSoccerstandLatestLeagueResults(leagueInfo: LeagueInfo): Future[LatestFinishedMatches] = {
     communication.latestLeagueResultsSource(leagueInfo).fetchSoccerstandData { latestLeagueSoccerstandData =>
       SoccerstandContentParser.parseLatestLeagueResults(latestLeagueSoccerstandData)
     }
   }
 
   private def fetchSoccerstandMatchSummary(matchId: String): Future[MatchSummary] = {
-    communication.matchSummarySource(matchId).fetchSoccerstandData { response =>
-      SoccerstandContentParser.parseMatchSummary(response)
-    }
+    for {
+      htmlMatchSummaryData <- communication.matchSummarySource(matchId).fetchSoccerstandData(identity)
+      matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
+      matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+    } yield SoccerstandContentParser.parseMatchSummary(matchId, htmlMatchSummaryData, matchDetails, matchHtml)
   }
 
   implicit class SoccerstandSource(source: Source[HttpResponse]) {
