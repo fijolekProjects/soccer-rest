@@ -18,40 +18,40 @@ object SoccerstandContentParser {
 
   def parseLatestLeagueResults(soccerstandData: String): LatestFinishedMatches = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
-    val leagueToParse = inputSplittedByLeague.head.split(newGame).head
+    val leagueToParse = inputSplittedByLeague.head.split(newMatch).head
     val leagueScores = inputSplittedByLeague.flatMap { splittedByLeague =>
-      val splittedByGames = splittedByLeague.split(newGame)
-      val gamesToParse = splittedByGames.tail
-      gamesToParse.map { MatchParser.parseFinishedMatch }.toSeq
+      val splittedByMatches = splittedByLeague.split(newMatch)
+      val matchesToParse = splittedByMatches.tail
+      matchesToParse.map { MatchParser.parseFinishedMatch }.toSeq
     }.toSeq
     val league = League.fromString(leagueToParse)
     val roundOrder = leagueScores.map(_.round).distinct.zipWithIndex.toMap
-    val gamesGroupedByRound = leagueScores.groupBy(_.round).toSeq.sortBy { case (roundd, _) => roundOrder(roundd) }
-    LatestFinishedMatches(league, gamesGroupedByRound)
+    val matchesGroupedByRound = leagueScores.groupBy(_.round).toSeq.sortBy { case (roundd, _) => roundOrder(roundd) }
+    LatestFinishedMatches(league, matchesGroupedByRound)
   }
   
   def parseLiveScores(soccerstandData: String): TodayScores = {
     implicit val now = new Date()
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
     val leagueScores = inputSplittedByLeague.map { splittedByLeague =>
-      val splittedByGames = splittedByLeague.split(newGame)
-      val (leagueToParse, gamesToParse) = (splittedByGames.head, splittedByGames.tail)
+      val splittedByMatches = splittedByLeague.split(newMatch)
+      val (leagueToParse, matchesToParse) = (splittedByMatches.head, splittedByMatches.tail)
       val league = League.fromString(leagueToParse)
-      val games = gamesToParse.map { MatchParser.parseMatch }
-      LeagueScores(league, games)
+      val matches = matchesToParse.map { MatchParser.parseMatch }
+      LeagueScores(league, matches)
     }.toSeq
     TodayScores(leagueScores)
   }
 
   def parseLeagueStandings(league: League, leagueHtmlData: String): LeagueStandings = {
     val allTdTagsPattern = "<td.*".r
-    val splittedByClubs = allTdTagsPattern.findAllMatchIn(leagueHtmlData).map(_.toString()).toList
-    val standings = splittedByClubs.map { clubData =>
+    val splittedByTeams = allTdTagsPattern.findAllMatchIn(leagueHtmlData).map(_.toString()).toList
+    val standings = splittedByTeams.map { teamData =>
       val tdTagPattern = "td".dataInsideTagRegex
-      val clubInfo = tdTagPattern.findAllMatchIn(clubData).toList
-      val clubHtmlData = XML.loadString(clubInfo.mkString("\n").wrapInDiv)
-      val clubDataExtracted = (clubHtmlData \\ "td").take(8).map(_.text).toVector
-      ClubStanding.fromTdValues(clubDataExtracted)
+      val teamInfo = tdTagPattern.findAllMatchIn(teamData).toList
+      val teamHtmlData = XML.loadString(teamInfo.mkString("\n").wrapInDiv)
+      val teamDataExtracted = (teamHtmlData \\ "td").take(8).map(_.text).toVector
+      TeamStanding.fromTdValues(teamDataExtracted)
     }.toList
     LeagueStandings(league, standings)
   }

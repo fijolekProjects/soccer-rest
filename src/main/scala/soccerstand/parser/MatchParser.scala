@@ -5,31 +5,31 @@ import java.util.Date
 import soccerstand.indexes.{MatchFromIdIndexes, FinishedMatchIndexes, MatchIndexes}
 import soccerstand.model.MatchStatus.{Finished, Live, Scheduled}
 import soccerstand.model._
-import soccerstand.parser.token.SoccerstandTokens.gameId
+import soccerstand.parser.token.SoccerstandTokens.matchId
 
 import scala.util.Try
 
 object MatchParser {
   import soccerstand.implicits.Implicits._
 
-  def parseFinishedMatch(gameToParse: String): FinishedMatch = {
-    SoccerstandDataParser.parse(gameToParse)(FinishedMatchIndexes) { scoreIndexes =>
-      MatchParser.fromFinishedGameIndexes(gameToParse, scoreIndexes)
+  def parseFinishedMatch(matchToParse: String): FinishedMatch = {
+    SoccerstandDataParser.parse(matchToParse)(FinishedMatchIndexes) { scoreIndexes =>
+      MatchParser.fromFinishedMatchIndexes(matchToParse, scoreIndexes)
     }
   }
 
-  private def fromFinishedGameIndexes(gameToParse: String, gameIndexes: FinishedMatchIndexes): FinishedMatch = {
-    val homeClub = Club.fromIndexes(gameToParse, gameIndexes.homeClubIdx, gameIndexes.homeClubScoreIdx)
-    val awayClub = Club.fromIndexes(gameToParse, gameIndexes.awayClubIdx, gameIndexes.awayClubScoreIdx)
-    val startDate = gameToParse.readDateAt(gameIndexes.dateIdx)
-    val round = Try { gameToParse.readDataAfterIdx(gameIndexes.roundIdx) }.getOrElse("")
-    val matchId = readMatchId(gameToParse)
-    FinishedMatch(matchId, homeClub, awayClub, startDate, round)
+  private def fromFinishedMatchIndexes(matchToParse: String, matchIndexes: FinishedMatchIndexes): FinishedMatch = {
+    val homeTeam = Team.fromIndexes(matchToParse, matchIndexes.homeTeamIdx, matchIndexes.homeTeamScoreIdx)
+    val awayTeam = Team.fromIndexes(matchToParse, matchIndexes.awayTeamIdx, matchIndexes.awayTeamScoreIdx)
+    val startDate = matchToParse.readDateAt(matchIndexes.dateIdx)
+    val round = Try { matchToParse.readDataAfterIdx(matchIndexes.roundIdx) }.getOrElse("")
+    val matchId = readMatchId(matchToParse)
+    FinishedMatch(matchId, homeTeam, awayTeam, startDate, round)
   }
 
   def parseMatch(matchToParse: String)(implicit now: Date): Match = {
     SoccerstandDataParser.parse(matchToParse)(MatchIndexes) { scoreIndexes =>
-      MatchParser.fromGameIndexes(matchToParse, scoreIndexes)
+      MatchParser.fromMatchIndexes(matchToParse, scoreIndexes)
     }
   }
   
@@ -40,35 +40,35 @@ object MatchParser {
     val teamNames = teamNamesAndScores.dataAfter('|')
     val (homeTeamName, awayTeamName) = teamNames.separateAt(" - ")
     SoccerstandDataParser.parse(dataFromMatchId)(MatchFromIdIndexes) { matchFromIdIndexes =>
-      val homeClub = Club.fromClubScoreIdx(dataFromMatchId, homeTeamName, matchFromIdIndexes.homeClubScoreIdx)
-      val awayClub = Club.fromClubScoreIdx(dataFromMatchId, awayTeamName, matchFromIdIndexes.awayClubScoreIdx)
+      val homeTeam = Team.fromTeamScoreIdx(dataFromMatchId, homeTeamName, matchFromIdIndexes.homeTeamScoreIdx)
+      val awayTeam = Team.fromTeamScoreIdx(dataFromMatchId, awayTeamName, matchFromIdIndexes.awayTeamScoreIdx)
       val startDate = dataFromMatchId.readDateAt(matchFromIdIndexes.dateIdx)
-      val matchStatus = MatchStatus.fromStatusCode(dataFromMatchId.readIntAt(matchFromIdIndexes.gameStatusIdx))
+      val matchStatus = MatchStatus.fromStatusCode(dataFromMatchId.readIntAt(matchFromIdIndexes.matchStatusIdx))
       val elapsedMinutes = elapsedMinutesForMatchStatus(startDate, matchStatus)
-      Match(matchId, homeClub, awayClub, matchStatus, startDate, elapsedMinutes)
+      Match(matchId, homeTeam, awayTeam, matchStatus, startDate, elapsedMinutes)
     }
   }
 
-  private def fromGameIndexes(gameToParse: String, gameIndexes: MatchIndexes)(implicit now: Date): Match = {
-    val homeClub = Club.fromIndexes(gameToParse, gameIndexes.homeClubIdx, gameIndexes.homeClubScoreIdx)
-    val awayClub = Club.fromIndexes(gameToParse, gameIndexes.awayClubIdx, gameIndexes.awayClubScoreIdx)
-    val startDate = gameToParse.readDateAt(gameIndexes.dateIdx)
-    val gameStatus = MatchStatus.fromStatusCode(gameToParse.readIntAt(gameIndexes.gameStatusIdx))
-    val elapsedMinutes = elapsedMinutesForMatchStatus(startDate, gameStatus)
-    val matchId = readMatchId(gameToParse)
-    Match(matchId, homeClub, awayClub, gameStatus, startDate, elapsedMinutes)
+  private def fromMatchIndexes(matchToParse: String, matchIndexes: MatchIndexes)(implicit now: Date): Match = {
+    val homeTeam = Team.fromIndexes(matchToParse, matchIndexes.homeTeamIdx, matchIndexes.homeTeamScoreIdx)
+    val awayTeam = Team.fromIndexes(matchToParse, matchIndexes.awayTeamIdx, matchIndexes.awayTeamScoreIdx)
+    val startDate = matchToParse.readDateAt(matchIndexes.dateIdx)
+    val matchStatus = MatchStatus.fromStatusCode(matchToParse.readIntAt(matchIndexes.matchStatusIdx))
+    val elapsedMinutes = elapsedMinutesForMatchStatus(startDate, matchStatus)
+    val matchId = readMatchId(matchToParse)
+    Match(matchId, homeTeam, awayTeam, matchStatus, startDate, elapsedMinutes)
   }
 
-  private def elapsedMinutesForMatchStatus(startDate: Date, gameStatus: MatchStatus)(implicit now: Date): Option[Int] = gameStatus match {
+  private def elapsedMinutesForMatchStatus(startDate: Date, matchStatus: MatchStatus)(implicit now: Date): Option[Int] = matchStatus match {
     case Scheduled => None
     case Live => Some(calculateElapsedMinutes(startDate))
     case Finished => None
   }
 
-  private def readMatchId(gameToParse: String): String = {
-    val gameIdIdx = 3
-    assert(gameToParse.take(gameIdIdx) == gameId)
-    gameToParse.readDataAfterIdx(gameIdIdx)
+  private def readMatchId(matchToParse: String): String = {
+    val matchIdIdx = 3
+    assert(matchToParse.take(matchIdIdx) == matchId)
+    matchToParse.readDataAfterIdx(matchIdIdx)
   }
 
   private def calculateElapsedMinutes(startDate: Date)(implicit now: Date): Int = {

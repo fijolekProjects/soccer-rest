@@ -2,16 +2,16 @@ package soccerstand.indexes
 
 import soccerstand.parser.token.SoccerstandTokens._
 
-case class MatchIndexes(homeClubIdx: Int, homeClubScoreIdx: Option[Int], awayClubIdx: Int, awayClubScoreIdx: Option[Int], gameStatusIdx: Int, dateIdx: Int)
+case class MatchIndexes(homeTeamIdx: Int, homeTeamScoreIdx: Option[Int], awayTeamIdx: Int, awayTeamScoreIdx: Option[Int], matchStatusIdx: Int, dateIdx: Int)
 object MatchIndexes extends ParsingIndexes {
   val zero = MatchIndexes(-1, None, -1, None, -1, -1)
   type I = MatchIndexes
   val mappings = Seq(
-    (homeClub, (idx: Int, idxs: I) => idxs.copy(homeClubIdx = idx)),
-    (awayClub, (idx: Int, idxs: I) => idxs.copy(awayClubIdx = idx)),
-    (homeClubScore, (idx: Int, idxs: I) => idxs.copy(homeClubScoreIdx = Some(idx))),
-    (awayClubScore, (idx: Int, idxs: I) => idxs.copy(awayClubScoreIdx = Some(idx))),
-    (gameStatus, (idx: Int, idxs: I) => idxs.copy(gameStatusIdx = idx)),
+    (homeTeam, (idx: Int, idxs: I) => idxs.copy(homeTeamIdx = idx)),
+    (awayTeam, (idx: Int, idxs: I) => idxs.copy(awayTeamIdx = idx)),
+    (homeTeamScore, (idx: Int, idxs: I) => idxs.copy(homeTeamScoreIdx = Some(idx))),
+    (awayTeamScore, (idx: Int, idxs: I) => idxs.copy(awayTeamScoreIdx = Some(idx))),
+    (matchStatus, (idx: Int, idxs: I) => idxs.copy(matchStatusIdx = idx)),
     (startDate, (idx: Int, idxs: I) => idxs.copy(dateIdx = idx))
   )
 }

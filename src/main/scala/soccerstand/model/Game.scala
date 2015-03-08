@@ -2,11 +2,11 @@ package soccerstand.model
 
 import java.util.Date
 
-import soccerstand.dto.FinishedGamesDto.Round
+import soccerstand.dto.FinishedMatchesDto.Round
 
-case class Match(id: String, homeClub: Club, awayClub: Club, status: MatchStatus, startDate: Date, elapsedMinutes: Option[Int])
+case class Match(id: String, homeTeam: Team, awayTeam: Team, status: MatchStatus, startDate: Date, elapsedMinutes: Option[Int])
 
-case class FinishedMatch(id: String, homeClub: Club, awayClub: Club, startDate: Date, round: String)
+case class FinishedMatch(id: String, homeTeam: Team, awayTeam: Team, startDate: Date, round: String)
 case class LatestFinishedMatches(league: League, matchesWithRound: Seq[(Round, Seq[FinishedMatch])])
 
 sealed trait MatchStatus

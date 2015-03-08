@@ -2,14 +2,14 @@ package soccerstand.parser.token
 
 object SoccerstandTokens {
   type Token = String
-  val homeClub = "CX÷"
-  val homeClubScore = "AG÷"
-  val homeClubScoreFromMatchId = "DE÷"
-  val awayClub = "AF÷"
-  val awayClubScore = "AH÷"
-  val awayClubScoreFromMatchId = "DF÷"
-  val gameStatus = "AB÷"
-  val gameStatusFromMatchId = "DA÷"
+  val homeTeam = "CX÷"
+  val homeTeamScore = "AG÷"
+  val homeTeamScoreFromMatchId = "DE÷"
+  val awayTeam = "AF÷"
+  val awayTeamScore = "AH÷"
+  val awayTeamScoreFromMatchId = "DF÷"
+  val matchStatus = "AB÷"
+  val matchStatusFromMatchId = "DA÷"
   val startDate = "AD÷"
   val startDateFromMatchId = "DC÷"
   val newLeague = "~ZA÷"
@@ -19,8 +19,8 @@ object SoccerstandTokens {
   val tournamentStageId = "ZC÷"
   val countryCode = "ZB÷"
   val round = "ER÷"
-  val newGame = '~'
-  val gameId = "AA÷"
+  val newMatch = '~'
+  val matchId = "AA÷"
   val anyContent = ".+?"
 }
 

@@ -2,8 +2,8 @@ package soccerstand.service.protocols
 
 import java.util.Date
 
-import soccerstand.dto.FinishedGamesDto.{FinishedGameDto, LatestFinishedGamesDto, RoundGames}
-import soccerstand.dto.GameDto
+import soccerstand.dto.FinishedMatchesDto.{LatestFinishedMatchesDto, FinishedMatchDto, LatestFinishedMatchesDto$, RoundMatches}
+import soccerstand.dto.MatchDto
 import soccerstand.model._
 import soccerstand.parser.matchsummary.model.MatchEvent._
 import soccerstand.parser.matchsummary.model.{MatchEvent, MatchSummary}
@@ -11,13 +11,13 @@ import spray.json._
 
 object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   implicit val leagueFormat = jsonFormat2(League.apply)
-  implicit val clubFormat = jsonFormat2(Club.apply)
-  implicit val gameDtoFormat = jsonFormat7(GameDto.apply)
-  implicit val standing = jsonFormat9(ClubStanding.apply)
+  implicit val teamFormat = jsonFormat2(Team.apply)
+  implicit val matchDtoFormat = jsonFormat7(MatchDto.apply)
+  implicit val standing = jsonFormat9(TeamStanding.apply)
   implicit val leagueStandings = jsonFormat2(LeagueStandings.apply)
-  implicit val finishedGameDto = jsonFormat4(FinishedGameDto.apply)
-  implicit val roundGames = jsonFormat2(RoundGames.apply)
-  implicit val latestFinishedGamesDto = jsonFormat2(LatestFinishedGamesDto.apply)
+  implicit val finishedMatchDto = jsonFormat4(FinishedMatchDto.apply)
+  implicit val roundMatches = jsonFormat2(RoundMatches.apply)
+  implicit val latestFinishedMatchesDto = jsonFormat2(LatestFinishedMatchesDto.apply)
   implicit val playerScoresFormat = jsonFormat6(PlayerScores.apply)
   implicit val topScorers = jsonFormat2(TopScorers.apply)
 
@@ -84,7 +84,7 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
     }
   }
 
-  implicit object GameStatusFormat extends CaseObjectFormat[MatchStatus]
+  implicit object MatchStatusFormat extends CaseObjectFormat[MatchStatus]
   implicit object PlayerPositionFormat extends CaseObjectFormat[PlayerPosition]
 
   trait CaseObjectFormat[T] extends JsonWriteFormat[T] {

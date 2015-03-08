@@ -12,8 +12,8 @@ import akka.http.unmarshalling.Unmarshal
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
 import db.repository.LeagueInfoRepository
-import soccerstand.dto.FinishedGamesDto.LatestFinishedGamesDto
-import soccerstand.dto.GameDto
+import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
+import soccerstand.dto.MatchDto
 import soccerstand.model._
 import soccerstand.parser.SoccerstandContentParser
 import soccerstand.parser.matchsummary.model.MatchSummary
@@ -34,11 +34,11 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
         pathPrefix("today") {
           (get & pathEnd){
             complete {
-              ToResponseMarshallable { fetchSoccerstandContent.map { GameDto.fromTodayScores } }
+              ToResponseMarshallable { fetchSoccerstandContent.map { MatchDto.fromTodayScores } }
             }
           } ~
             getUserLeagueInfoAndCompleteWith { leagueInfo =>
-              fetchSoccerstandTodayLeagueResults(leagueInfo).map { GameDto.fromTodayScores }
+              fetchSoccerstandTodayLeagueResults(leagueInfo).map { MatchDto.fromTodayScores }
             }
         } ~
         pathPrefix("standings") {
@@ -46,7 +46,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
         } ~
         pathPrefix("latest") {
           getUserLeagueInfoAndCompleteWith { leagueInfo =>
-            fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedGamesDto.toDto(_).latestFirst }
+            fetchSoccerstandLatestLeagueResults(leagueInfo).map { LatestFinishedMatchesDto.toDto(_).latestFirst }
           }
         } ~
         pathPrefix("topscorers") {

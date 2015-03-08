@@ -43,8 +43,8 @@ object LeagueInfoSaver extends Slf4jLogging with Measureable {
   private def parseSoccerstandLeagueInfo(soccerstandData: String): Seq[LeagueInfo] = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
     inputSplittedByLeague.par.flatMap { splittedByLeague =>
-      val splittedByGames = splittedByLeague.split(newGame)
-      val leagueToParse = splittedByGames.head
+      val splittedByMatches = splittedByLeague.split(newMatch)
+      val leagueToParse = splittedByMatches.head
       parseLeagueInfo(leagueToParse)
     }.seq.toSeq
   }

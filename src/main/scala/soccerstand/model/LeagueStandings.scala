@@ -1,14 +1,9 @@
 package soccerstand.model
 
-case class LeagueStandings(league: League, clubs: Seq[ClubStanding]) {
-  override def toString: String = {
-    clubs.mkString("\n")
-  }
-}
+case class LeagueStandings(league: League, teams: Seq[TeamStanding])
+case class TeamStanding(rank: Int, team: String, matchesPlayed: Int, wins: Int, draws: Int, losses: Int, goalsScored: Int, goalsConcealed: Int, points: Int)
 
-case class ClubStanding(rank: Int, team: String, matchesPlayed: Int, wins: Int, draws: Int, losses: Int, goalsScored: Int, goalsConcealed: Int, points: Int)
-
-object ClubStanding {
+object TeamStanding {
   def fromTdValues(values: Vector[String]) = {
     val rank = values(0).init.toInt
     val team = values(1)
@@ -20,7 +15,7 @@ object ClubStanding {
     val goalsScored = goals.head.toInt
     val goalsConcealed = goals.last.toInt
     val points = values(7).toInt
-    ClubStanding(rank, team, matchesPlayed, wins, draws, losses, goalsScored, goalsConcealed, points)
+    TeamStanding(rank, team, matchesPlayed, wins, draws, losses, goalsScored, goalsConcealed, points)
   }
 }
 

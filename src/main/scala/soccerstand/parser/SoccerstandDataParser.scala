@@ -8,16 +8,16 @@ object SoccerstandDataParser {
   def parse[DomainObj](data: String)(parsingIndexes: ParsingIndexes)(indexesToDomainObj: parsingIndexes.I => DomainObj): DomainObj = {
     val tokenOffset = 3
     @tailrec
-    def go(gameDataLeft: String, gameIndexes: parsingIndexes.I, currentIndex: Int): parsingIndexes.I = {
-      if (gameDataLeft.isEmpty) gameIndexes
+    def go(dataLeft: String, indexes: parsingIndexes.I, currentIndex: Int): parsingIndexes.I = {
+      if (dataLeft.isEmpty) indexes
       else {
         val nextIndex = currentIndex + 1
-        val gameDataCurrentToken = gameDataLeft.take(tokenOffset)
-        val gameDataTail = gameDataLeft.tail
-        val matchingTokenFound = parsingIndexes.mappings.find { case (token, _) => token == gameDataCurrentToken }
+        val currentDataToken = dataLeft.take(tokenOffset)
+        val dataTail = dataLeft.tail
+        val matchingTokenFound = parsingIndexes.mappings.find { case (token, _) => token == currentDataToken }
         matchingTokenFound match {
-          case Some((_, mapping)) => go(gameDataTail, mapping(currentIndex + tokenOffset, gameIndexes), nextIndex)
-          case None => go(gameDataTail, gameIndexes, nextIndex)
+          case Some((_, mapping)) => go(dataTail, mapping(currentIndex + tokenOffset, indexes), nextIndex)
+          case None => go(dataTail, indexes, nextIndex)
         }
       }
     }
