@@ -10,11 +10,9 @@ import soccerstand.parser.matchsummary.model.MatchSummary
 
 import scala.xml.XML
 
-object SoccerstandContentParser {
+class SoccerstandContentParser(leagueInfoRepository: LeagueInfoRepository) {
   import soccerstand.implicits.Implicits._
   import soccerstand.parser.token.SoccerstandTokens._
-
-  val leagueInfoRepository = new LeagueInfoRepository()
 
   def parseLatestLeagueResults(soccerstandData: String): LatestFinishedMatches = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)

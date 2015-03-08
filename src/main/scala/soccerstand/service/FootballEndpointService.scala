@@ -26,6 +26,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
   val logger = Logging(system, getClass)
 
   private lazy val communication = new SoccerstandCommunication(logger)
+  def newSoccerstandContentParser = new SoccerstandContentParser(leagueInfoRepository)
 
   val routes = {
     logRequest("soccerstand-data-fetcher") {
@@ -71,30 +72,30 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
   }
 
   private def fetchSoccerstandContent: Future[TodayScores] = {
-    communication.todaySource.fetchSoccerstandData { SoccerstandContentParser.parseLiveScores }
+    communication.todaySource.fetchSoccerstandData { newSoccerstandContentParser.parseLiveScores }
   }
 
   private def fetchSoccerstandLeagueStandings(leagueInfo: LeagueInfo): Future[LeagueStandings] = {
     communication.standingsSource(leagueInfo.tournamentIds).fetchSoccerstandData { response =>
-      SoccerstandContentParser.parseLeagueStandings(leagueInfo.league, response)
+      newSoccerstandContentParser.parseLeagueStandings(leagueInfo.league, response)
     }
   }
 
   private def fetchSoccerstandTopScorers(leagueInfo: LeagueInfo): Future[TopScorers] = {
     communication.topScorersSource(leagueInfo.tournamentIds).fetchSoccerstandData { response =>
-      SoccerstandContentParser.parseTopScorers(leagueInfo.league, response)
+      newSoccerstandContentParser.parseTopScorers(leagueInfo.league, response)
     }
   }
 
   private def fetchSoccerstandTodayLeagueResults(leagueInfo: LeagueInfo): Future[TodayScores] = {
     communication.todayLeagueResultsSource(leagueInfo).fetchSoccerstandData { leagueSoccerstandData =>
-      SoccerstandContentParser.parseLiveScores(leagueSoccerstandData)
+      newSoccerstandContentParser.parseLiveScores(leagueSoccerstandData)
     }
   }
 
   private def fetchSoccerstandLatestLeagueResults(leagueInfo: LeagueInfo): Future[LatestFinishedMatches] = {
     communication.latestLeagueResultsSource(leagueInfo).fetchSoccerstandData { latestLeagueSoccerstandData =>
-      SoccerstandContentParser.parseLatestLeagueResults(latestLeagueSoccerstandData)
+      newSoccerstandContentParser.parseLatestLeagueResults(latestLeagueSoccerstandData)
     }
   }
 
@@ -103,7 +104,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
       htmlMatchSummaryData <- communication.matchSummarySource(matchId).fetchSoccerstandData(identity)
       matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
       matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
-    } yield SoccerstandContentParser.parseMatchSummary(matchId, htmlMatchSummaryData, matchDetails, matchHtml)
+    } yield newSoccerstandContentParser.parseMatchSummary(matchId, htmlMatchSummaryData, matchDetails, matchHtml)
   }
 
   implicit class SoccerstandSource(source: Source[HttpResponse]) {

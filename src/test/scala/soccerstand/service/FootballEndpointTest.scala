@@ -22,6 +22,7 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
   )
   val leagueInfoRepository = mock[LeagueInfoRepository]
   when(leagueInfoRepository.findByNaturalId("germany", "bundesliga")).thenReturn(bundesligaLeagueInfo)
+  when(leagueInfoRepository.findByTournamentIds(bundesligaLeagueInfo.tournamentIds)).thenReturn(bundesligaLeagueInfo)
 
   val footballEndpoint = new FootballEndpoint(leagueInfoRepository)
 
@@ -53,8 +54,8 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
     }
 
     scenario("return 200 for summary match route") {
-      val manCityVsBarcelonaMatchId = "M57DXCbA"
-      Get(s"/summary/$manCityVsBarcelonaMatchId") ~> routes ~> check {
+      val hannoverVsBayernMatchId = "GbFxpC8G"
+      Get(s"/summary/$hannoverVsBayernMatchId") ~> routes ~> check {
         itWorks()
       }
     }
