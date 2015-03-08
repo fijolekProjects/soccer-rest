@@ -27,6 +27,15 @@ object TournamentIds {
     val tournamentStageId = leagueInfoToParse.readDataAfterIdx(leagueInfoIndexes.tournamentStageIdIdx)
     TournamentIds(tournamentId, tournamentStageId)
   }
+  import soccerstand.parser.token.SoccerstandTokens._
+
+  def fromMatchHtmlPage(matchHtmlPage: String) = {
+    val tournamentIdPat = s"tournamentEncodedId = '($anyContent)';".r
+    val tournamentStageIdPat = s"tournamentStageEncodedId = '($anyContent)';".r
+    val tournamentId = tournamentIdPat.findFirstMatchIn(matchHtmlPage).get.group(1)
+    val tournamentStageId = tournamentStageIdPat.findFirstMatchIn(matchHtmlPage).get.group(1)
+    TournamentIds(tournamentId, tournamentStageId)
+  }
 }
 case class TournamentNumIds(tournamentId: Int, tournamentPageSeasonResults: Int)
 object TournamentNumIds {

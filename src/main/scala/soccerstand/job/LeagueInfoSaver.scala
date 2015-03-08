@@ -2,7 +2,6 @@ package soccerstand.job
 
 import java.net.URL
 
-import db.DBFactory
 import db.repository.LeagueInfoRepository
 import soccerstand.indexes.TournamentIdsIndexes
 import soccerstand.model.{League, LeagueInfo, TournamentIds, TournamentNumIds}
@@ -16,7 +15,7 @@ object LeagueInfoSaver extends Slf4jLogging with Measureable {
   import soccerstand.implicits.Implicits._
   import soccerstand.parser.token.SoccerstandTokens._
 
-  val leagueInfoRepository = new LeagueInfoRepository(DBFactory.getInstance)
+  val leagueInfoRepository = new LeagueInfoRepository()
 
   def main(args: Array[String]) {
     val basicInfoForAllLeagues = measure("fetching info for leagues from all countries") {

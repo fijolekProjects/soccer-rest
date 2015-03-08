@@ -11,7 +11,6 @@ import akka.http.server.Directives._
 import akka.http.unmarshalling.Unmarshal
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
-import db.DBFactory
 import db.repository.LeagueInfoRepository
 import soccerstand.dto.FinishedGamesDto.LatestFinishedGamesDto
 import soccerstand.dto.GameDto
@@ -124,7 +123,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
 object FootballEndpointService extends App {
   implicit val actorDeps = ActorDeps.default
   implicit val (system, executor, materializer) = actorDeps.unpack
-  val leagueInfoRepository = new LeagueInfoRepository(DBFactory.getInstance)
+  val leagueInfoRepository = new LeagueInfoRepository()
   val footbalEnpoint = new FootballEndpoint(leagueInfoRepository)
 
   Http().bind(interface = "0.0.0.0", port = 9000).startHandlingWith(footbalEnpoint.routes)

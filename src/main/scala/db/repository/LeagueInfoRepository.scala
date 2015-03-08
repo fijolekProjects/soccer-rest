@@ -2,11 +2,11 @@ package db.repository
 
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.MongoDB
-import db.ConvertFromDBObject
-import soccerstand.model.LeagueInfo
+import db.{DBFactory, ConvertFromDBObject}
+import soccerstand.model.{TournamentIds, LeagueInfo}
 import soccerstand.util.Slf4jLogging
 
-class LeagueInfoRepository(private val db: MongoDB) extends Slf4jLogging {
+class LeagueInfoRepository() extends DBRepository with Slf4jLogging {
   private def leagueInfoColl = db("leagueInfo")
   def createOrUpdateAll(infos: Seq[LeagueInfo]): Unit = {
     val leagueInfosToSave = prepareLeagueInfosToSave(infos)
@@ -32,6 +32,19 @@ class LeagueInfoRepository(private val db: MongoDB) extends Slf4jLogging {
     val infoFromDB = leagueInfoColl.findOne(Map("naturalId" -> naturalId, "priority" -> 0)).get
     ConvertFromDBObject.asObject[LeagueInfo](infoFromDB)
   }
+
+  def findByTournamentIds(tournamentIds: TournamentIds): LeagueInfo = {
+    val tournamentIdsQuery = Map(
+      "tournamentIdString" -> tournamentIds.tournamentIdString, "tournamentStageId" -> tournamentIds.tournamentStageId
+    )
+    val where = Map("tournamentIds" -> tournamentIdsQuery)
+    val infoFromDB = leagueInfoColl.findOne(where).get
+    ConvertFromDBObject.asObject[LeagueInfo](infoFromDB)
+  }
   
   private case class LeagueInfoToSave(info: LeagueInfo, infoToSave: DBObject)
+}
+
+trait DBRepository {
+  protected val db: MongoDB = DBFactory.getInstance
 }

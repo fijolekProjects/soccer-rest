@@ -1,7 +1,6 @@
 package soccerstand.parser.matchsummary.model
 
 import soccerstand.implicits.Implicits._
-import soccerstand.model.Match
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchMinute
 
 import scala.collection.immutable.Seq

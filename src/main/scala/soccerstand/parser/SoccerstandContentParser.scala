@@ -2,6 +2,7 @@ package soccerstand.parser
 
 import java.util.Date
 
+import db.repository.LeagueInfoRepository
 import soccerstand.model._
 import soccerstand.parser.matchsummary.MatchEventsParser
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchEvents
@@ -12,6 +13,8 @@ import scala.xml.XML
 object SoccerstandContentParser {
   import soccerstand.implicits.Implicits._
   import soccerstand.parser.token.SoccerstandTokens._
+
+  val leagueInfoRepository = new LeagueInfoRepository()
 
   def parseLatestLeagueResults(soccerstandData: String): LatestFinishedMatches = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
@@ -62,9 +65,15 @@ object SoccerstandContentParser {
   }
 
   def parseMatchSummary(matchId: String, htmlMatchSummaryData: String, dataFromMatchId: String, matchHtmlPage: String): MatchSummary = {
+    val leagueInfo = leagueInfoFromMatchHtml(matchHtmlPage)
     val matchInfo = MatchParser.parseMatchFromId(matchId, dataFromMatchId, matchHtmlPage)
     val matchEvents = parseMatchEvents(htmlMatchSummaryData)
-    MatchSummary(matchInfo, matchEvents)
+    MatchSummary(leagueInfo.league, matchInfo, matchEvents)
+  }
+
+  private def leagueInfoFromMatchHtml(matchHtmlPage: String): LeagueInfo = {
+    val tournamentIds = TournamentIds.fromMatchHtmlPage(matchHtmlPage)
+    leagueInfoRepository.findByTournamentIds(tournamentIds)
   }
 
   private def parseMatchEvents(htmlMatchSummaryData: String): MatchEvents = {

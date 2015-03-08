@@ -68,9 +68,8 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   }
 
   implicit val matchEvents = jsonFormat2(MatchEvents.apply)
-  // DOIT need league information - gameDto should be instad of matchFormat
   implicit val matchFormat = jsonFormat6(Match.apply)
-  implicit val matchSummary = jsonFormat2(MatchSummary.apply)
+  implicit val matchSummary = jsonFormat3(MatchSummary.apply)
 
   implicit object MatchEventFormat extends RootJsonFormat[MatchEvent] {
     override def read(json: JsValue): MatchEvent = ???
