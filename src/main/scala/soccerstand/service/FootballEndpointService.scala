@@ -107,6 +107,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
     } yield newSoccerstandContentParser.parseMatchSummary(matchId, htmlMatchSummaryData, matchDetails, matchHtml)
   }
 
+  // DOIT it should be value class
   implicit class SoccerstandSource(source: Source[HttpResponse]) {
     def fetchSoccerstandData[T](mapResponse: String => T): Future[T] = {
       source.runWith(Sink.head).flatMap { response =>

@@ -10,7 +10,7 @@ import soccerstand.parser.matchsummary.model.MatchSummary
 
 import scala.xml.XML
 
-class SoccerstandContentParser(leagueInfoRepository: LeagueInfoRepository) {
+class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepository) {
   import soccerstand.implicits.Implicits._
   import soccerstand.parser.token.SoccerstandTokens._
 

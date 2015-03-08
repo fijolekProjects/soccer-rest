@@ -4,11 +4,12 @@ import soccerstand.parser.matchsummary.extractors.EventsExtractors._
 import soccerstand.parser.matchsummary.model.MatchEvent
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchEventType.{AwayTeamEvent, HomeTeamEvent}
 import soccerstand.parser.matchsummary.model.MatchEvent.{MatchEventType, MatchEvents}
+import soccerstand.util.Slf4jLogging
 
 import scala.collection.immutable.Seq
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.{Node, Elem, NodeSeq}
 
-object MatchEventsParser {
+object MatchEventsParser extends Slf4jLogging {
   import soccerstand.implicits.Implicits._
 
   def parseMatchEvents(matchSummaryAsHtml: Elem): MatchEvents = {
@@ -21,7 +22,7 @@ object MatchEventsParser {
   private def allMatchEvents(matchSummaryAsHtml: Elem): NodeSeq = {
     (matchSummaryAsHtml \\ "tr" \\ "td").filter { tableCell =>
       val events = (tableCell \\ "div").map(_ \@ "class")
-      events.containsElemWithPartOf("time-box")
+      events.containsElemWithWord("time-box")
     }
   }
 
@@ -36,12 +37,24 @@ object MatchEventsParser {
     }
   }
 
-  private def makeEventsTyped(events: NodeSeq): Seq[MatchEvent] = events.map {
-    case YellowCardExtractor(yellowCardEvent)             => yellowCardEvent
-    case SubstitutionExtractor(subsEvent)                 => subsEvent
-    case SecondYellowCardExtractor(secondYellowCardEvent) => secondYellowCardEvent
-    case MissedPenaltyExtractor(missedPenaltyEvent)       => missedPenaltyEvent
-    case ScoredPenaltyExtractor(scoredPenaltyEvent)       => scoredPenaltyEvent
-    case GoalExtractor(goalEvent)                         => goalEvent
+  private def makeEventsTyped(events: NodeSeq): Seq[MatchEvent] = {
+    val typedEvents = events.map {
+      case YellowCardExtractor(yellowCardEvent)             => Right(yellowCardEvent)
+      case SecondYellowCardExtractor(secondYellowCardEvent) => Right(secondYellowCardEvent)
+      case RedCardExtractor(redCardEvent)                   => Right(redCardEvent)
+      case SubstitutionExtractor(subsEvent)                 => Right(subsEvent)
+      case MissedPenaltyExtractor(missedPenaltyEvent)       => Right(missedPenaltyEvent)
+      case ScoredPenaltyExtractor(scoredPenaltyEvent)       => Right(scoredPenaltyEvent)
+      case GoalExtractor(goalEvent)                         => Right(goalEvent)
+      case OwnGoalExtractor(ownGoalEvent)                   => Right(ownGoalEvent)
+      case unknownEvent                                     => Left(unknownEvent)
+    }
+    logErrors(typedEvents)
+    typedEvents.collect { case Right(typedEvent) => typedEvent }
+  }
+
+  private def logErrors(typedEvents: Seq[Either[Node, MatchEvent]]): Unit = {
+    val errors = typedEvents.collect { case Left(e) => e }
+    errors.foreach { e => warn(s"unknown event found: $e")}
   }
 }

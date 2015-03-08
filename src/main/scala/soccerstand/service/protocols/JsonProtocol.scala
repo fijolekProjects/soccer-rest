@@ -57,6 +57,11 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
     override val eventName: String = "goal"
   }
 
+  object OwnGoalFormat extends MatchEventFormatWriter[OwnGoal] {
+    override val writer = jsonFormat2(OwnGoal.apply)
+    override val eventName: String = "own goal"
+  }
+
   object MissedPenaltyFormat extends MatchEventFormatWriter[MissedPenalty] {
     override val writer = jsonFormat2(MissedPenalty.apply)
     override val eventName: String = "missed penalty"
@@ -79,6 +84,7 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
       case o: RedCard => RedCardFormat.write(o)
       case o: Substitution => SubstitutionFormat.write(o)
       case o: Goal => GoalFormat.write(o)
+      case o: OwnGoal => OwnGoalFormat.write(o)
       case o: MissedPenalty => MissedPenaltyFormat.write(o)
       case o: ScoredPenalty => ScoredPenaltyFormat.write(o)
     }

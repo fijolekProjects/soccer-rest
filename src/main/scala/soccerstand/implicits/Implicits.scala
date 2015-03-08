@@ -32,8 +32,9 @@ object Implicits {
   }
   implicit class RichString(s: String) {
     def withoutWhitespaces = s.replaceAll(" ", "")
-    def normalizedLeagueName = withoutSeasonSpecifics.withoutWhitespaces
     def whitespacesToDashes = s.replaceAll(" ", "-").replaceAll("---", "-").replaceAll("'", "-")
+    // DOIT: 2 functions below should be elsewhere
+    def normalizedLeagueName = withoutSeasonSpecifics.withoutWhitespaces
     def withoutSeasonSpecifics = s.replaceAll(" -(.*)", "")
     def withoutParens = s.replaceAll("[()]", "")
     def withoutWhitespacesAtFrontAndBack = {
@@ -98,8 +99,8 @@ object Implicits {
     }
   }
   implicit class StringCollection[Repr](xs: SeqLike[String, Repr]) {
-    def containsElemWithPartOf(searchedString: String): Boolean = {
-      xs.exists { elem => elem.contains(searchedString) }
+    def containsElemWithWord(searchedString: String): Boolean = {
+      xs.exists { elem => elem.split(" ").contains(searchedString) }
     }
   }
 }

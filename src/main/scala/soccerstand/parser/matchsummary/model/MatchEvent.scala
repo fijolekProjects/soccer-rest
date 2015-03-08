@@ -15,11 +15,12 @@ object MatchEvent {
 
   case class MatchEvents(homeTeam: Seq[MatchEvent], awayTeam: Seq[MatchEvent])
 
-  case class YellowCard       (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent
-  case class SecondYellowCard (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent
-  case class RedCard          (player: String,    reason: String,             minute: MatchMinute) extends MatchEvent
+  case class YellowCard       (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
+  case class SecondYellowCard (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
+  case class RedCard          (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
   case class Substitution     (playerIn: String,  playerOut: String,          minute: MatchMinute) extends MatchEvent
   case class Goal             (player: String,    assistBy: Option[String],   minute: MatchMinute) extends MatchEvent
+  case class OwnGoal          (player: String,                                minute: MatchMinute) extends MatchEvent
   case class MissedPenalty    (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
   case class ScoredPenalty    (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
 

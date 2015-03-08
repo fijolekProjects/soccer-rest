@@ -4,6 +4,7 @@ import soccerstand.implicits.Implicits._
 import soccerstand.parser.matchsummary.model.MatchEvent
 import soccerstand.parser.matchsummary.model.MatchEvent.{MatchMinute, PenaltyMatchEvent}
 
+import scala.collection.immutable.::
 import scala.xml.Node
 
 case class HtmlEvent(name: String, classesWithData: List[String], classWithOptionalData: Option[String] = None)
@@ -21,7 +22,7 @@ trait MatchEventExtractor[Event <: MatchEvent] extends CapableOfMatchEventExtrac
 
   def unapply(matchEvent: Node): Option[Event] = {
     val spans = matchEvent \\ "span"
-    if (spans.map(_ \@ "class").containsElemWithPartOf(htmlEvent.name)) {
+    if (spans.map(_ \@ "class").containsElemWithWord(htmlEvent.name)) {
       val textFromEventInfoClasses = htmlEvent.classesWithData.map { spans.getTextFromClass }
       val optionalTextFromEventInfoClasses = htmlEvent.classWithOptionalData.flatMap { spans.findTextFromClass }
       Some(mapEventData(textFromEventInfoClasses, optionalTextFromEventInfoClasses, MatchMinute.fromMatchEvent(matchEvent)))
@@ -35,7 +36,7 @@ trait PenaltyEventExtractor[PenaltyEventType <: PenaltyMatchEvent] extends Capab
 
   def unapply(matchEvent: Node): Option[PenaltyEventType] = {
     val spans = matchEvent \\ "span"
-    if (spans.map(_ \@ "class").containsElemWithPartOf(penaltyEventNames.className) && matchEvent.text.contains(penaltyEventNames.comment)) {
+    if (spans.map(_ \@ "class").containsElemWithWord(penaltyEventNames.className) && matchEvent.text.contains(penaltyEventNames.comment)) {
       val player = spans.getTextFromClass("participant-name").withoutWhitespacesAtFrontAndBack
       Some(constructor(player, MatchMinute.fromMatchEvent(matchEvent)))
     } else None
@@ -51,14 +52,17 @@ trait MatchEventExtractorWithoutOptionalFields[Event <: MatchEvent] extends Matc
   protected def mapEventData(textFromEventInfoClasses: List[String], minute: MatchMinute): Event
 }
 
-trait CardGivenExtractor[CardGivenMatchEvent <: MatchEvent] extends MatchEventExtractorWithoutOptionalFields[CardGivenMatchEvent] {
+trait CardGivenExtractor[CardGivenMatchEvent <: MatchEvent] extends MatchEventExtractor[CardGivenMatchEvent] {
   protected val htmlCardEventName: String
   protected type Player = String
   protected type Reason = String
-  protected val constructor: (Player, Reason, MatchMinute) => CardGivenMatchEvent
-  override protected def htmlEvent = HtmlEvent(htmlCardEventName, List("participant-name", "subincident-penalty"))
-  override protected def mapEventData(textFromEventInfoClasses: List[String], minute: MatchMinute): CardGivenMatchEvent = {
-    val player :: reason :: Nil = textFromEventInfoClasses
-    constructor(player.withoutWhitespacesAtFrontAndBack, reason.withoutParens, minute)
+  protected val constructor: (Player, Option[Reason], MatchMinute) => CardGivenMatchEvent
+  override protected def htmlEvent = HtmlEvent(htmlCardEventName, List("participant-name"), Some("subincident-penalty"))
+
+  override protected def mapEventData(textFromEventInfoClasses: List[String],
+                                      reason: Option[Reason],
+                                      minute: MatchMinute): CardGivenMatchEvent = {
+    val player :: Nil = textFromEventInfoClasses
+    constructor(player.withoutWhitespacesAtFrontAndBack, reason.map(_.withoutParens), minute)
   }
 }
