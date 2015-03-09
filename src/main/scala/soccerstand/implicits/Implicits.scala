@@ -103,4 +103,16 @@ object Implicits {
       xs.exists { elem => elem.split(" ").contains(searchedString) }
     }
   }
+
+  implicit class NestedMap[A, B, C](m: Map[A, Map[B, C]]) {
+    def sequence: Map[B, Map[A, C]] = {
+      //DOIT too complicated! maybe get rid of these Maps?
+      val seq = for {
+        (a, mapbc) <- m.toSeq
+        (b, c) <- mapbc
+      } yield b -> (a -> c)
+      seq.groupBy { case (bb, _) => bb }.mapValues { s => s.map { case ((_, ac)) => ac }.toMap }
+    }
+  }
+
 }

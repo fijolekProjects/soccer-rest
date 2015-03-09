@@ -2,18 +2,44 @@ package soccerstand.parser.matchsummary.model
 
 import soccerstand.implicits.Implicits._
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchMinute
+import soccerstand.parser.matchsummary.model.MatchEvent.MatchStage.{PenaltiesEvents, ExtraTimeEvents, SecondHalfEvents, FirstHalfEvents}
 
 import scala.collection.immutable.Seq
 import scala.xml.Node
 
 object MatchEvent {
-  sealed trait MatchEventType
-  object MatchEventType {
-    case object HomeTeamEvent extends MatchEventType
-    case object AwayTeamEvent extends MatchEventType
+  sealed trait MatchEventTeam
+  object MatchEventTeam {
+    case object HomeTeamEvent extends MatchEventTeam
+    case object AwayTeamEvent extends MatchEventTeam
   }
 
-  case class MatchEvents(homeTeam: Seq[MatchEvent], awayTeam: Seq[MatchEvent])
+  sealed trait MatchStageTag
+  object MatchStageTag {
+    case object FirstHalf extends MatchStageTag
+    case object SecondHalf extends MatchStageTag
+    case object ExtraTime extends MatchStageTag
+    case object Penalties extends MatchStageTag
+  }
+
+  sealed trait MatchStage {
+    val teamEvents: TeamEvents
+  }
+
+  object MatchStage {
+    case class FirstHalfEvents(teamEvents: TeamEvents) extends MatchStage
+    case class SecondHalfEvents(teamEvents: TeamEvents) extends MatchStage
+    case class ExtraTimeEvents(teamEvents: TeamEvents) extends MatchStage
+    // DOIT events in penalties should not have minutes - penaltyOrder should be there
+    case class PenaltiesEvents(teamEvents: TeamEvents) extends MatchStage
+  }
+
+  case class TeamEvents(events: Seq[MatchEvent])
+  case class MatchEvents(homeTeam: MatchStageEvents, awayTeam: MatchStageEvents)
+  case class MatchStageEvents(firstHalf: FirstHalfEvents,
+                              secondHalf: SecondHalfEvents,
+                              extraTime: ExtraTimeEvents,
+                              penalties: PenaltiesEvents)
 
   case class YellowCard       (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
   case class SecondYellowCard (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
@@ -50,7 +76,6 @@ object MatchEvent {
     val player: String
   }
 }
-
 
 sealed trait MatchEvent {
   val minute: MatchMinute

@@ -2,7 +2,7 @@ package soccerstand.service.protocols
 
 import java.util.Date
 
-import soccerstand.dto.FinishedMatchesDto.{LatestFinishedMatchesDto, FinishedMatchDto, LatestFinishedMatchesDto$, RoundMatches}
+import soccerstand.dto.FinishedMatchesDto.{FinishedMatchDto, LatestFinishedMatchesDto, RoundMatches}
 import soccerstand.dto.MatchDto
 import soccerstand.model._
 import soccerstand.parser.matchsummary.model.MatchEvent._
@@ -72,12 +72,28 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
     override val eventName: String = "scored penalty"
   }
 
+  implicit object MatchStageEventsFormat extends JsonWriteFormat[MatchStageEvents] {
+    override def write(obj: MatchStageEvents): JsValue = {
+      val stageEventsMap = Map(
+        "firstHalf" -> ManyMatchEventsFormat.write(obj.firstHalf.teamEvents.events),
+        "secondHalf" -> ManyMatchEventsFormat.write(obj.secondHalf.teamEvents.events),
+        "extraTime" -> ManyMatchEventsFormat.write(obj.extraTime.teamEvents.events),
+        "penalties" -> ManyMatchEventsFormat.write(obj.penalties.teamEvents.events)
+      )
+      JsObject(stageEventsMap)
+    }
+  }
+
   implicit val matchEvents = jsonFormat2(MatchEvents.apply)
+
   implicit val matchFormat = jsonFormat6(Match.apply)
   implicit val matchSummary = jsonFormat3(MatchSummary.apply)
 
-  implicit object MatchEventFormat extends RootJsonFormat[MatchEvent] {
-    override def read(json: JsValue): MatchEvent = ???
+  object ManyMatchEventsFormat extends JsonWriteFormat[Seq[MatchEvent]] {
+    override def write(obj: Seq[MatchEvent]): JsValue = JsArray(obj.map(MatchEventFormat.write).toVector)
+  }
+
+  implicit object MatchEventFormat extends JsonWriteFormat[MatchEvent] {
     override def write(obj: MatchEvent): JsValue = obj match {
       case o: YellowCard => YellowCardFormat.write(o)
       case o: SecondYellowCard => SecondYellowCardFormat.write(o)
