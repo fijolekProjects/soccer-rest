@@ -74,10 +74,11 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
     leagueInfoRepository.findByTournamentIds(tournamentIds)
   }
 
-  private def parseMatchEvents(htmlMatchSummaryData: String): MatchEvents = {
+  private def parseMatchEvents(htmlMatchSummaryData: String): Option[MatchEvents] = {
     val matchSummaryFromTableRegex = "table".dataInsideTagRegex
-    val matchSummaryFromTable = matchSummaryFromTableRegex.findFirstIn(htmlMatchSummaryData).get.withoutNbsp
-    val matchSummaryAsHtml = XML.loadString(matchSummaryFromTable)
-    MatchEventsParser.parseMatchEvents(matchSummaryAsHtml)
+    for {
+      matchSummaryFromTable <- matchSummaryFromTableRegex.findFirstIn(htmlMatchSummaryData)
+      matchSummaryAsHtml = XML.loadString(matchSummaryFromTable.withoutNbsp)
+    } yield MatchEventsParser.parseMatchEvents(matchSummaryAsHtml)
   }
 }

@@ -26,7 +26,7 @@ object MatchEventsParser extends Slf4jLogging {
   private def allEventsTyped(matchSummaryAsHtml: Elem): Map[MatchEventTeam, Map[MatchStageTag, Seq[MatchEvent]]] = {
     val matchEvents = allMatchEvents(matchSummaryAsHtml)
     val matchEventsByTeam = groupEventsByTeam(matchEvents)
-    matchEventsByTeam.mapValues { _.mapValues(makeEventsTyped).withDefaultValue(Seq()) }
+    matchEventsByTeam.mapValues { _.mapValues(makeEventsTyped).withDefaultValue(Seq()) }.withDefaultValue(Map())
   }
 
   private def allMatchEvents(matchSummaryAsHtml: Elem): Map[MatchStageTag, NodeSeq] = {
