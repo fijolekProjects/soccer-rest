@@ -2,7 +2,7 @@ package soccerstand.dto
 
 import java.util.Date
 
-import soccerstand.model.{Team, LatestFinishedMatches, League}
+import soccerstand.model.{TeamMatchResult, LatestFinishedMatches, League}
 
 object FinishedMatchesDto {
   type Round = String
@@ -15,7 +15,7 @@ object FinishedMatchesDto {
   case class RoundMatches(round: Round, matches: Seq[FinishedMatchDto]) {
     def latestMatchDate = matches.map(_.startDate).max
   }
-  case class FinishedMatchDto(id: String, homeTeam: Team, awayTeam: Team, startDate: Date)
+  case class FinishedMatchDto(id: String, homeTeam: TeamMatchResult, awayTeam: TeamMatchResult, startDate: Date)
 
   object LatestFinishedMatchesDto {
     def toDto(finishedMatches: LatestFinishedMatches): LatestFinishedMatchesDto = {

@@ -11,7 +11,20 @@ import spray.json._
 
 object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   implicit val leagueFormat = jsonFormat2(League.apply)
-  implicit val teamFormat = jsonFormat2(Team.apply)
+  implicit object TeamFormat extends JsonWriteFormat[Team] {
+    override def write(obj: Team): JsValue = JsObject(Map("id" -> JsString(obj.naturalId.value), "name" -> JsString(obj.name)))
+  }
+
+  implicit object TeamMatchResultFormat extends JsonWriteFormat[TeamMatchResult] {
+    override def write(obj: TeamMatchResult): JsValue = {
+      val goals = obj.goals match {
+        case None => JsNull
+        case Some(a) => JsNumber(a)
+      }
+      JsObject(TeamFormat.write(obj.team).asJsObject.fields + ("goals" -> goals))
+    }
+  }
+
   implicit val matchDtoFormat = jsonFormat7(MatchDto.apply)
   implicit val standing = jsonFormat9(TeamStanding.apply)
   implicit val leagueStandings = jsonFormat2(LeagueStandings.apply)

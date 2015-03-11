@@ -4,7 +4,7 @@ import akka.http.model.ContentTypes._
 import akka.http.model.StatusCodes._
 import akka.http.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.http.unmarshalling.Unmarshal
-import db.repository.LeagueInfoRepository
+import db.repository.{TeamInfoRepository, LeagueInfoRepository}
 import org.mockito.Mockito.when
 import org.scalatest._
 import org.scalatest.mock.MockitoSugar
@@ -21,10 +21,11 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
     tournamentNumIds = TournamentNumIds(160, 160)
   )
   val leagueInfoRepository = mock[LeagueInfoRepository]
+  val teamInfoRepository = mock[TeamInfoRepository]
   when(leagueInfoRepository.findByNaturalId("germany", "bundesliga")).thenReturn(bundesligaLeagueInfo)
   when(leagueInfoRepository.findByTournamentIds(bundesligaLeagueInfo.tournamentIds)).thenReturn(bundesligaLeagueInfo)
 
-  val footballEndpoint = new FootballEndpoint(leagueInfoRepository)
+  val footballEndpoint = new FootballEndpoint(leagueInfoRepository, teamInfoRepository)
 
   val routes = footballEndpoint.routes
 

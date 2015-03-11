@@ -4,7 +4,7 @@ import java.util.Date
 
 import soccerstand.model._
 
-case class MatchDto(id: String, league: League, homeTeam: Team, awayTeam: Team, status: MatchStatus, startDate: Date, elapsedMinutes: Option[Int])
+case class MatchDto(id: String, league: League, homeTeam: TeamMatchResult, awayTeam: TeamMatchResult, status: MatchStatus, startDate: Date, elapsedMinutes: Option[Int])
 
 object MatchDto {
   def fromTodayScores(soccerstandContent: TodayScores): Seq[MatchDto] = {

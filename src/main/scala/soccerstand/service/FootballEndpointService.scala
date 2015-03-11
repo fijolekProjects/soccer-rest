@@ -9,9 +9,9 @@ import akka.http.model.HttpResponse
 import akka.http.model.StatusCodes._
 import akka.http.server.Directives._
 import akka.http.unmarshalling.Unmarshal
+import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
-import db.repository.LeagueInfoRepository
+import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
 import soccerstand.model._
@@ -21,12 +21,13 @@ import soccerstand.service.communication.SoccerstandCommunication
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit actorDeps: ActorDeps = ActorDeps.default) {
+class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepository: TeamInfoRepository)
+                      (implicit actorDeps: ActorDeps = ActorDeps.default) {
   implicit val (system, executor, materializer) = actorDeps.unpack
   val logger = Logging(system, getClass)
 
   private lazy val communication = new SoccerstandCommunication(logger)
-  def newSoccerstandContentParser = new SoccerstandContentParser(leagueInfoRepository)
+  def newSoccerstandContentParser = new SoccerstandContentParser(leagueInfoRepository, teamInfoRepository)
 
   val routes = {
     logRequest("soccerstand-data-fetcher") {
@@ -126,7 +127,8 @@ object FootballEndpointService extends App {
   implicit val actorDeps = ActorDeps.default
   implicit val (system, executor, materializer) = actorDeps.unpack
   val leagueInfoRepository = new LeagueInfoRepository()
-  val footbalEnpoint = new FootballEndpoint(leagueInfoRepository)
+  val teamInfoRepository = new TeamInfoRepository()
+  val footbalEnpoint = new FootballEndpoint(leagueInfoRepository, teamInfoRepository)
 
   //FIXME: Workaround https://github.com/akka/akka/issues/16972 is fixed
   Http().bind(interface = "0.0.0.0", port = 9000).to(Sink.foreach { conn =>

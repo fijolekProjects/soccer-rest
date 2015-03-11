@@ -3,20 +3,20 @@ package soccerstand.model
 import db.ConvertableToDBObject
 import soccerstand.implicits.Implicits._
 import soccerstand.indexes.TournamentIdsIndexes
-import soccerstand.model.LeagueInfo._
 
 case class LeagueInfo(league: League, tournamentIds: TournamentIds, tournamentNumIds: TournamentNumIds) extends ConvertableToDBObject {
   val countryCode = league.country.code
   val leagueId = tournamentNumIds.tournamentId
   val seasonId = tournamentNumIds.tournamentPageSeasonResults
-  val naturalId = createNaturalId(league.country.name, leagueName)
+  val naturalId = LeagueNaturalIdCalculator(league.country.name, leagueName)
   def countryName = league.country.name
   def leagueName = league.leagueName
 }
+
+object LeagueNaturalIdCalculator {
+  def apply(country: String, leagueName: String) = country.withoutWhitespaces.toLowerCase + leagueName.toLowerCase.normalizedLeagueName
+}
 object LeagueInfo {
-  def createNaturalId(country: String, leagueName: String): String = {
-    country.withoutWhitespaces.toLowerCase + leagueName.toLowerCase.normalizedLeagueName
-  }
   def soccerstandResultsUrlPart(leagueInfo: LeagueInfo): String = leagueInfo.league.soccerstandResultsUrlPart
 }
 
