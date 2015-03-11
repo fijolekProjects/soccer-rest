@@ -30,7 +30,6 @@ object MatchEvent {
     case class FirstHalfEvents(teamEvents: TeamEvents) extends MatchStage
     case class SecondHalfEvents(teamEvents: TeamEvents) extends MatchStage
     case class ExtraTimeEvents(teamEvents: TeamEvents) extends MatchStage
-    // DOIT events in penalties should not have minutes - penaltyOrder should be there
     case class PenaltiesEvents(teamEvents: TeamEvents) extends MatchStage
   }
 
@@ -41,14 +40,16 @@ object MatchEvent {
                               extraTime: ExtraTimeEvents,
                               penalties: PenaltiesEvents)
 
-  case class YellowCard       (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
-  case class SecondYellowCard (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
-  case class RedCard          (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
-  case class Substitution     (playerIn: String,  playerOut: String,          minute: MatchMinute) extends MatchEvent
-  case class Goal             (player: String,    assistBy: Option[String],   minute: MatchMinute) extends MatchEvent
-  case class OwnGoal          (player: String,                                minute: MatchMinute) extends MatchEvent
-  case class MissedPenalty    (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
-  case class ScoredPenalty    (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
+  case class YellowCard            (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
+  case class SecondYellowCard      (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
+  case class RedCard               (player: String,    reason: Option[String],     minute: MatchMinute) extends MatchEvent
+  case class Substitution          (playerIn: String,  playerOut: String,          minute: MatchMinute) extends MatchEvent
+  case class Goal                  (player: String,    assistBy: Option[String],   minute: MatchMinute) extends MatchEvent
+  case class OwnGoal               (player: String,                                minute: MatchMinute) extends MatchEvent
+  case class MissedPenalty         (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
+  case class ScoredPenalty         (player: String,                                minute: MatchMinute) extends PenaltyMatchEvent
+  case class OffMatchScoredPenalty (player: String,                                order: Int) extends PenaltyMatchEvent
+  case class OffMatchMissedPenalty (player: String,                                order: Int) extends PenaltyMatchEvent
 
   case class MatchMinute(minute: Int, extraTime: Option[Int]) {
     def prettyPrint = extraTime match {
@@ -57,12 +58,7 @@ object MatchEvent {
     }
   }
   object MatchMinute {
-    def fromMatchEvent(matchEvent: Node): MatchMinute = {
-      val minute = (matchEvent \\ "div").getTextFromClass("time-box").init
-      MatchMinute.fromString(minute)
-    }
-
-    private def fromString(minute: String) = {
+    def fromString(minute: String): MatchMinute = {
       val minuteInExtraTime = minute.contains("+")
       if (!minuteInExtraTime) MatchMinute(minute.toInt, None)
       else {
@@ -77,6 +73,4 @@ object MatchEvent {
   }
 }
 
-sealed trait MatchEvent {
-  val minute: MatchMinute
-}
+sealed trait MatchEvent

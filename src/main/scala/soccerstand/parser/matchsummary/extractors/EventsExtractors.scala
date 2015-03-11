@@ -47,12 +47,28 @@ object EventsExtractors {
   }
 
   object ScoredPenaltyExtractor extends PenaltyEventExtractor[ScoredPenalty] {
-    override protected val penaltyEventNames = PenaltyHtmlEventNames("soccer-ball", "(Penalty)")
+    override protected val penaltyEventNames = PenaltyExtractors.scoredPenaltyEventNames
     override protected val constructor = ScoredPenalty.apply _
   }
 
   object MissedPenaltyExtractor extends PenaltyEventExtractor[MissedPenalty] {
-    override protected val penaltyEventNames = PenaltyHtmlEventNames("penalty-missed", "(Penalty missed)")
+    override protected val penaltyEventNames = PenaltyExtractors.missedPenaltyEventNames
     override protected val constructor = MissedPenalty.apply _
   }
+
+  object OffMatchScoredPenaltyExtractor extends OffMatchPenaltyEventExtractor[OffMatchScoredPenalty] {
+    override protected val penaltyEventNames = PenaltyExtractors.scoredPenaltyEventNames
+    override protected val constructor = OffMatchScoredPenalty.apply _
+  }
+
+  object OffMatchMissedPenaltyExtractor extends OffMatchPenaltyEventExtractor[OffMatchMissedPenalty] {
+    override protected val penaltyEventNames = PenaltyExtractors.missedPenaltyEventNames
+    override protected val constructor = OffMatchMissedPenalty.apply _
+  }
+
+  object PenaltyExtractors {
+    val scoredPenaltyEventNames = PenaltyHtmlEventNames("soccer-ball", "(Penalty)")
+    val missedPenaltyEventNames = PenaltyHtmlEventNames("penalty-missed", "(Penalty missed)")
+  }
+
 }

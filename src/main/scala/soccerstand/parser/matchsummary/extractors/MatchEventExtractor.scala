@@ -25,7 +25,20 @@ trait MatchEventExtractor[Event <: MatchEvent] extends CapableOfMatchEventExtrac
     if (spans.map(_ \@ "class").containsElemWithWord(htmlEvent.name)) {
       val textFromEventInfoClasses = htmlEvent.classesWithData.map { spans.getTextFromClass }
       val optionalTextFromEventInfoClasses = htmlEvent.classWithOptionalData.flatMap { spans.findTextFromClass }
-      Some(mapEventData(textFromEventInfoClasses, optionalTextFromEventInfoClasses, MatchMinute.fromMatchEvent(matchEvent)))
+      Some(mapEventData(textFromEventInfoClasses, optionalTextFromEventInfoClasses, MatchMinute.fromString(TimeBoxExtractor(matchEvent))))
+    } else None
+  }
+}
+
+object PenaltyExtractor {
+  def apply[A, PenaltyEventType](matchEvent: Node,
+                                 penaltyEventNames: PenaltyHtmlEventNames,
+                                 constructor: (String, A) => PenaltyEventType)
+                                (mapTimebox: String => A): Option[PenaltyEventType] = {
+    val spans = matchEvent \\ "span"
+    if (spans.map(_ \@ "class").containsElemWithWord(penaltyEventNames.className) && matchEvent.text.contains(penaltyEventNames.comment)) {
+      val player = spans.getTextFromClass("participant-name").withoutWhitespacesAtFrontAndBack
+      Some(constructor(player, mapTimebox(TimeBoxExtractor(matchEvent))))
     } else None
   }
 }
@@ -35,11 +48,18 @@ trait PenaltyEventExtractor[PenaltyEventType <: PenaltyMatchEvent] extends Capab
   protected def constructor: (String, MatchMinute) => PenaltyEventType
 
   def unapply(matchEvent: Node): Option[PenaltyEventType] = {
-    val spans = matchEvent \\ "span"
-    if (spans.map(_ \@ "class").containsElemWithWord(penaltyEventNames.className) && matchEvent.text.contains(penaltyEventNames.comment)) {
-      val player = spans.getTextFromClass("participant-name").withoutWhitespacesAtFrontAndBack
-      Some(constructor(player, MatchMinute.fromMatchEvent(matchEvent)))
-    } else None
+    PenaltyExtractor(matchEvent, penaltyEventNames, constructor) { minute => MatchMinute.fromString(minute) }
+  }
+}
+
+trait OffMatchPenaltyEventExtractor[PenaltyEventType <: PenaltyMatchEvent] extends CapableOfMatchEventExtracting[PenaltyEventType]{
+  protected def penaltyEventNames: PenaltyHtmlEventNames
+  protected type PenaltyOrder = Int
+  protected def constructor: (String, PenaltyOrder) => PenaltyEventType
+
+  def unapply(matchEvent: Node): Option[PenaltyEventType] = {
+    // penalty order in timebox does not make sense, but this is how html is formed
+    PenaltyExtractor(matchEvent, penaltyEventNames, constructor) { order => order.toInt }
   }
 }
 
@@ -65,4 +85,8 @@ trait CardGivenExtractor[CardGivenMatchEvent <: MatchEvent] extends MatchEventEx
     val player :: Nil = textFromEventInfoClasses
     constructor(player.withoutWhitespacesAtFrontAndBack, reason.map(_.withoutParens), minute)
   }
+}
+
+object TimeBoxExtractor {
+  def apply(matchEvent: Node): String = (matchEvent \\ "div").getTextFromClass("time-box").init
 }
