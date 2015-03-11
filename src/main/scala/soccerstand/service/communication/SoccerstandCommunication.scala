@@ -12,16 +12,14 @@ import soccerstand.service.communication.SoccerstandCommunication._
 
 class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: ActorSystem) {
 
-  def todaySource: Source[HttpResponse] = {
-    SoccerstandRequest.GetBE("/x/feed/f_1_0_1_en_1/")
-  }
+  def todaySource: Source[HttpResponse, Unit] = SoccerstandRequest.GetBE("/x/feed/f_1_0_1_en_1/")
 
-  def standingsSource(tournamentIds: TournamentIds): Source[HttpResponse] = {
+  def standingsSource(tournamentIds: TournamentIds): Source[HttpResponse, Unit] = {
     val tournamentPart = buildTournamentRequestPart(tournamentIds)
     SoccerstandRequest.GetBE(s"/x/feed/ss_4_${tournamentPart}_table_overall/")
   }
   
-  def topScorersSource(tournamentIds: TournamentIds): Source[HttpResponse] = {
+  def topScorersSource(tournamentIds: TournamentIds): Source[HttpResponse, Unit] = {
     val tournamentPart = buildTournamentRequestPart(tournamentIds)
     SoccerstandRequest.GetBE(s"/x/feed/ss_1_${tournamentPart}_top_scorers_")
   }
@@ -30,35 +28,35 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
     s"${tournamentIds.tournamentIdString}_${tournamentIds.tournamentStageId}"
   }
 
-  def todayLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
+  def todayLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse, Unit] = {
     SoccerstandRequest.GetBE(s"/x/feed/t_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_1_en_1/")
   }
   
-  def latestLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse] = {
+  def latestLeagueResultsSource(leagueInfo: LeagueInfo): Source[HttpResponse, Unit] = {
     val urlPath = s"/x/feed/tr_1_${leagueInfo.countryCode}_${leagueInfo.leagueId}_${leagueInfo.seasonId}_0_1_en_1/"
     SoccerstandRequest.GetBE(urlPath)
   }
 
-  def matchSummarySource(matchId: String): Source[HttpResponse] = {
+  def matchSummarySource(matchId: String): Source[HttpResponse, Unit] = {
     SoccerstandRequest.GetBE(s"/x/feed/d_su_${matchId}_en_1/")
   }
 
-  def matchDetailsSource(matchId: String): Source[HttpResponse] = {
+  def matchDetailsSource(matchId: String): Source[HttpResponse, Unit] = {
     SoccerstandRequest.GetBE(s"/x/feed/dc_1_$matchId/")
   }
 
-  def matchHtmlSource(matchId: String): Source[HttpResponse] = {
+  def matchHtmlSource(matchId: String): Source[HttpResponse, Unit] = {
     SoccerstandRequest.GetFE(s"/match/$matchId/")
   }
 
   object SoccerstandRequest {
     val GetBE = getRequest(soccerstandBackendRoute) _
     val GetFE = getRequest(soccerstandFrontendRoute) _
-    private def getRequest(route: String)(uri: String): Source[HttpResponse] = {
+    private def getRequest(route: String)(uri: String): Source[HttpResponse, Unit] = {
       val req = RequestBuilding.Get(uri)
       val reqWithHeader = req.addHeader(RawHeader("X-Fsign", "SW9D1eZo"))
       logger.info(s"external service request: $route${reqWithHeader.uri}")
-      Source.single(reqWithHeader).via(Http().outgoingConnection(route).flow)
+      Source.single(reqWithHeader).via(Http().outgoingConnection(route))
     }
   }
 }

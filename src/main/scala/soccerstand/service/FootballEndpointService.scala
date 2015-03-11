@@ -108,9 +108,9 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository)(implicit acto
   }
 
   // DOIT it should be value class
-  implicit class SoccerstandSource(source: Source[HttpResponse]) {
+  implicit class SoccerstandSource(source: Source[HttpResponse, Unit]) {
     def fetchSoccerstandData[T](mapResponse: String => T): Future[T] = {
-      source.runWith(Sink.head).flatMap { response =>
+      source.runWith(Sink.head()).flatMap { response =>
         response.status match {
           case OK =>
             Unmarshal(response.entity).to[String].map { mapResponse }
@@ -128,10 +128,13 @@ object FootballEndpointService extends App {
   val leagueInfoRepository = new LeagueInfoRepository()
   val footbalEnpoint = new FootballEndpoint(leagueInfoRepository)
 
-  Http().bind(interface = "0.0.0.0", port = 9000).startHandlingWith(footbalEnpoint.routes)
+  //FIXME: Workaround https://github.com/akka/akka/issues/16972 is fixed
+  Http().bind(interface = "0.0.0.0", port = 9000).to(Sink.foreach { conn =>
+      conn.flow.join(footbalEnpoint.routes).run()
+  }).run()
 }
 
-class ActorDeps(system: ActorSystem, executor: ExecutionContextExecutor, materializer: FlowMaterializer) {
+class ActorDeps(system: ActorSystem, executor: ExecutionContextExecutor, materializer: ActorFlowMaterializer) {
   val unpack = (system, executor, materializer)
 }
 object ActorDeps {
