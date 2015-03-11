@@ -47,12 +47,17 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
       }
     }
 
-    scenario("return 200 for standings latest route") {
+    scenario("return 200 for standings route") {
       Get(s"/standings/germany/bundesliga") ~> routes ~> check {
         itWorks()
       }
     }
 
+    scenario("return 200 for topscorers route") {
+      Get(s"/topscorers/germany/bundesliga") ~> routes ~> check {
+        itWorks()
+      }
+    }
     scenario("return 200 for summary match route") {
       val hannoverVsBayernMatchId = "GbFxpC8G"
       Get(s"/summary/$hannoverVsBayernMatchId") ~> routes ~> check {

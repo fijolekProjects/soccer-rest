@@ -55,8 +55,7 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
   }
 
   def parseTopScorers(league: League, htmlTopScorersData: String): TopScorers = {
-    val topScorers = htmlTopScorersData.replaceFirst("<tfoot>(.+?)</span>", "</tbody>")
-    val topScorersXml = XML.loadString(topScorers.wrapInDiv)
+    val topScorersXml = XML.loadString(htmlTopScorersData)
     val playerRows = topScorersXml \\ "tbody" \ "tr"
     val scorers = playerRows.map { PlayerScores.fromHtmlPlayerRow }
     TopScorers(league, scorers)
