@@ -1,7 +1,7 @@
 package soccerstand.model
 
 import soccerstand.implicits.Implicits._
-// DOIT naturalId and name should be in separate cae class /*Team*/
+
 case class Team(naturalId: NaturalTeamId, name: String)
 object Team {
   def apply(name: String, league: League): Team = {

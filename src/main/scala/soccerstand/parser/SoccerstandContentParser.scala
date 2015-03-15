@@ -54,9 +54,9 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
       val teamIdPattern = s"'/team/$anyContent/($anyContent)/'".r
       val teamId = teamIdPattern.findFirstMatchIn(teamData).get.group(1)
       (teamId, TeamStanding.fromTdValues(teamDataExtracted, league))
-    }.toMap
-    saveTeamInfosAsync(standingsForTeam, league)
-    LeagueStandings(league, standingsForTeam.values)
+    }
+    saveTeamInfosAsync(standingsForTeam.toMap, league)
+    LeagueStandings(league, standingsForTeam.map { case (_, standing) => standing } )
   }
 
   private def saveTeamInfosAsync(standingsForTeam: Map[String, TeamStanding], league: League): Future[Unit] = {

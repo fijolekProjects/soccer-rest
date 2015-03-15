@@ -100,7 +100,7 @@ object Implicits {
   }
   implicit class StringCollection[Repr](xs: SeqLike[String, Repr]) {
     def containsElemWithWord(searchedString: String): Boolean = {
-      xs.exists { elem => elem.split(" ").contains(searchedString) }
+      xs.exists { elem => elem.contains(searchedString) }
     }
   }
 

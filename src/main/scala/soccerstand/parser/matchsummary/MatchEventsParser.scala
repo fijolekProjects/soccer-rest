@@ -65,8 +65,8 @@ object MatchEventsParser extends Slf4jLogging {
 
   private def onlyTimedEvents(events: NodeSeq) = {
     (events \\ "td").filter { tableCell =>
-      val events = (tableCell \\ "div").map(_ \@ "class")
-      events.containsElemWithWord("time-box")
+      val potentiallyTimedEvents = (tableCell \\ "div").map(_ \@ "class")
+      potentiallyTimedEvents.containsElemWithWord("time-box")
     }
   }
 
