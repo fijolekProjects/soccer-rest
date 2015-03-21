@@ -26,11 +26,29 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   }
 
   implicit val matchDtoFormat = jsonFormat7(MatchDto.apply)
-  implicit val standing = jsonFormat9(TeamStanding.apply)
+  implicit object StandingFormat extends JsonWriteFormat[TeamStanding] {
+    override def write(obj: TeamStanding): JsValue = {
+      JsObject(Map(
+        "id" -> JsString(obj.team.naturalId.value),
+        "name" -> JsString(obj.team.name),
+        "rank" -> JsNumber(obj.rank),
+        "goalsScored" -> JsNumber(obj.goalsScored),
+        "goalsConcealed" -> JsNumber(obj.goalsConcealed),
+        "draws" -> JsNumber(obj.draws),
+        "matchesPlayed" -> JsNumber(obj.matchesPlayed),
+        "points" -> JsNumber(obj.points),
+        "wins" -> JsNumber(obj.wins),
+        "losses" -> JsNumber(obj.losses)
+      ))
+    }
+  }
   implicit val leagueStandings = jsonFormat2(LeagueStandings.apply)
   implicit val finishedMatchDto = jsonFormat4(FinishedMatchDto.apply)
   implicit val roundMatches = jsonFormat2(RoundMatches.apply)
   implicit val latestFinishedMatchesDto = jsonFormat2(LatestFinishedMatchesDto.apply)
+  implicit val latestFinishedMatchesNoRound = jsonFormat4(FinishedMatchNoRound.apply)
+  implicit val teamMatchesInLeague = jsonFormat2(TeamMatchesInLeague.apply)
+  implicit val latestTeamFinishedMatches = jsonFormat1(LatestTeamFinishedMatches.apply)
   implicit val playerScoresFormat = jsonFormat6(PlayerScores.apply)
   implicit val topScorers = jsonFormat2(TopScorers.apply)
 

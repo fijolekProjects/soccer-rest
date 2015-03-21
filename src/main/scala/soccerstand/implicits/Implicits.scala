@@ -21,8 +21,8 @@ object Implicits {
     def onlyUsefulData = a.replaceAll(s"$endOfUsefulData1(.*)", "").replaceAll(s"$endOfUsefulData2(.*)", "")
   }
   implicit class SplittedString(a: String) {
-    def splitOmitFirst(regex: String) = a.split(regex).tail
-    def splitOmitFirst(char: Char) = a.split(char).tail
+    def splitOmitFirst(regex: String): Array[String] = a.split(regex).tail
+    def splitOmitFirst(char: Char): Array[String] = a.split(char).tail
   }
   implicit class RichDate(date: Date) {
     def diffInMinutes(otherDate: Date): Int = {
@@ -49,7 +49,7 @@ object Implicits {
     }
     def separateAt(sign: String): (String, String) = {
       val (left, right) = s.splitAt(s.indexOf(sign))
-      val rightWithoutSign = right.drop(sign.size)
+      val rightWithoutSign = right.drop(sign.length)
       (left, rightWithoutSign)
     }
     def dataAfter(sign: Char) = {

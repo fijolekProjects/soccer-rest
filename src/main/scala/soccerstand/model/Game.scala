@@ -7,7 +7,10 @@ import soccerstand.dto.FinishedMatchesDto.Round
 case class Match(id: String, homeTeam: TeamMatchResult, awayTeam: TeamMatchResult, status: MatchStatus, startDate: Date, elapsedMinutes: Option[Int])
 
 case class FinishedMatch(id: String, homeTeam: TeamMatchResult, awayTeam: TeamMatchResult, startDate: Date, round: String)
+case class FinishedMatchNoRound(id: String, homeTeam: TeamMatchResult, awayTeam: TeamMatchResult, startDate: Date)
 case class LatestFinishedMatches(league: League, matchesWithRound: Seq[(Round, Seq[FinishedMatch])])
+case class TeamMatchesInLeague(league: League, matches: Seq[FinishedMatchNoRound])
+case class LatestTeamFinishedMatches(leagueMatches: Seq[TeamMatchesInLeague])
 
 sealed trait MatchStatus
 object MatchStatus {

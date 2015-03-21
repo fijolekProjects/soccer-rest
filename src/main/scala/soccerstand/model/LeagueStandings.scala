@@ -3,12 +3,19 @@ package soccerstand.model
 import db.ConvertableToDBObject
 
 case class LeagueStandings(league: League, teams: Iterable[TeamStanding])
+case class TeamInfo(id: SoccerstandTeamId, naturalId: NaturalTeamId, name: String, league: League) extends ConvertableToDBObject
+
 case class TeamStanding(rank: Int, team: Team, matchesPlayed: Int, wins: Int, draws: Int, losses: Int, goalsScored: Int, goalsConcealed: Int, points: Int)
-case class TeamInfo(id: String, league: League, name: String) extends ConvertableToDBObject {
-  val naturalId = NaturalTeamIdCalculator(name, league)
+
+object TeamInfo {
+  def apply(id: SoccerstandTeamId, team: Team, league: League): TeamInfo = {
+    TeamInfo(id, team.naturalId, team.name, league)
+  }
 }
 
-case class NaturalTeamId(value: String) extends AnyVal
+case class SoccerstandTeamId(value: String)
+
+case class NaturalTeamId(value: String)
 object NaturalTeamIdCalculator {
   import soccerstand.implicits.Implicits._
   def apply(teamName: String, league: League) = {

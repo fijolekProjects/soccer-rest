@@ -17,51 +17,73 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
   import soccerstand.parser.token.SoccerstandTokens._
 
   def parseLatestLeagueResults(soccerstandData: String): LatestFinishedMatches = {
-    val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
+    val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague).toSeq
     val leagueToParse = inputSplittedByLeague.head.split(newMatch).head
     implicit val league = League.fromString(leagueToParse)
     val leagueScores = inputSplittedByLeague.flatMap { splittedByLeague =>
       val splittedByMatches = splittedByLeague.split(newMatch)
       val matchesToParse = splittedByMatches.tail
       matchesToParse.map { MatchParser.parseFinishedMatch }.toSeq
-    }.toSeq
+    }
     val roundOrder = leagueScores.map(_.round).distinct.zipWithIndex.toMap
     val matchesGroupedByRound = leagueScores.groupBy(_.round).toSeq.sortBy { case (roundd, _) => roundOrder(roundd) }
     LatestFinishedMatches(league, matchesGroupedByRound)
   }
-  
+
+  def parseLatestTeamResults(soccerstandData: String): LatestTeamFinishedMatches = {
+    val teamMatchesInLeague = extractLeagueAndMatchesToParse(soccerstandData) { case (league, matchesToParse) =>
+      implicit val implLeague = league
+      (league, matchesToParse.map { MatchParser.parseFinishedMatchNoRound } )
+    }
+    val latestTeamFinishedMatches = teamMatchesInLeague
+      .groupBy { case (league, _) => league }
+      .mapValues { leagueWithMatches => leagueWithMatches.unzip._2.flatten }
+    val matches = latestTeamFinishedMatches.toSeq.map { case (league, matchesForLeague) => TeamMatchesInLeague(league, matchesForLeague) }
+    LatestTeamFinishedMatches(matches)
+  }
+
   def parseLiveScores(soccerstandData: String): TodayScores = {
     implicit val now = new Date()
-    val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
-    val leagueScores = inputSplittedByLeague.map { splittedByLeague =>
-      val splittedByMatches = splittedByLeague.split(newMatch)
-      val (leagueToParse, matchesToParse) = (splittedByMatches.head, splittedByMatches.tail)
-      implicit val league = League.fromString(leagueToParse)
+    val leagueScores = extractLeagueAndMatchesToParse(soccerstandData) { case (league, matchesToParse) =>
+      implicit val implLeague = league
       val matches = matchesToParse.map { MatchParser.parseMatch }
       LeagueScores(league, matches)
-    }.toSeq
+    }
     TodayScores(leagueScores)
+  }
+
+  type MatchesToParse = Seq[String]
+  private def extractLeagueAndMatchesToParse[A](soccerstandData: String)(f: (League, MatchesToParse) => A): Seq[A] = {
+    val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague).toSeq
+    inputSplittedByLeague.map { splittedByLeague =>
+      val splittedByMatches = splittedByLeague.split(newMatch)
+      val (leagueToParse, matchesToParse) = (splittedByMatches.head, splittedByMatches.tail)
+      val league = League.fromString(leagueToParse)
+      f(league, matchesToParse)
+    }
   }
 
   def parseLeagueStandings(league: League, leagueHtmlData: String): LeagueStandings = {
     val allTdTagsPattern = "<td.*".r
     val splittedByTeams = allTdTagsPattern.findAllMatchIn(leagueHtmlData).map(_.toString()).toList
-    val standingsForTeam = splittedByTeams.map { teamData =>
+    val standingsForTeams = splittedByTeams.map { teamData =>
       val tdTagPattern = "td".dataInsideTagRegex
       val teamInfo = tdTagPattern.findAllMatchIn(teamData).toList
       val teamHtmlData = XML.loadString(teamInfo.mkString.wrapInDiv)
       val teamDataExtracted = (teamHtmlData \\ "td").take(8).map(_.text).toVector
       val teamIdPattern = s"'/team/$anyContent/($anyContent)/'".r
       val teamId = teamIdPattern.findFirstMatchIn(teamData).get.group(1)
-      (teamId, TeamStanding.fromTdValues(teamDataExtracted, league))
+      (SoccerstandTeamId(teamId), TeamStanding.fromTdValues(teamDataExtracted, league))
     }
-    saveTeamInfosAsync(standingsForTeam.toMap, league)
-    LeagueStandings(league, standingsForTeam.map { case (_, standing) => standing } )
+
+    LeagueStandings(league, standingsForTeams.map { case (_, standing) => standing } )
   }
 
-  private def saveTeamInfosAsync(standingsForTeam: Map[String, TeamStanding], league: League): Future[Unit] = {
-    val teamInfos = standingsForTeam.map { case (id, teamStringing) => TeamInfo(id, league, teamStringing.team.name)}
-    new TeamInfoSaver(teamInfoRepository).saveUnknownTeams(teamInfos)
+  //DOIT this method is unused right now, because of the job that saves team info
+  private def saveTeamInfosAsync(standingsForTeam: Map[SoccerstandTeamId, TeamStanding], league: League): Future[Unit] = {
+    import ExecutionContext.Implicits.global
+    val teamInfos = standingsForTeam.map { case (id, teamStanding) => TeamInfo(id, teamStanding.team, league) }
+    Future { teamInfoRepository.createOrUpdateAll(teamInfos) }
   }
 
   def parseTopScorers(league: League, htmlTopScorersData: String): TopScorers = {
@@ -89,13 +111,5 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
       matchSummaryFromTable <- matchSummaryFromTableRegex.findFirstIn(htmlMatchSummaryData)
       matchSummaryAsHtml = XML.loadString(matchSummaryFromTable.withoutNbsp)
     } yield MatchEventsParser.parseMatchEvents(matchSummaryAsHtml)
-  }
-}
-
-class TeamInfoSaver(private val teamInfoRepository: TeamInfoRepository) {
-  import ExecutionContext.Implicits.global
-
-  def saveUnknownTeams(teams: Iterable[TeamInfo]): Future[Unit] = {
-    Future { teamInfoRepository.createOrUpdateAll(teams) }
   }
 }

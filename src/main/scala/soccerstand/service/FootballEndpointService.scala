@@ -58,6 +58,13 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
           (get & pathSuffix(Segment)) { matchId =>
             complete { ToResponseMarshallable(fetchSoccerstandMatchSummary(matchId)) }
           }
+        } ~
+        pathPrefix("team") {
+          (get & pathSuffix(Segment)) { naturalTeamId =>
+            val teamInfo = teamInfoRepository.findByNaturalId(NaturalTeamId(naturalTeamId))
+            val teamResults = fetchSoccerstandLatestTeamResults(teamInfo)
+            complete { ToResponseMarshallable(teamResults) }
+          }
         }
       }
     }
@@ -97,6 +104,12 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   private def fetchSoccerstandLatestLeagueResults(leagueInfo: LeagueInfo): Future[LatestFinishedMatches] = {
     communication.latestLeagueResultsSource(leagueInfo).fetchSoccerstandData { latestLeagueSoccerstandData =>
       newSoccerstandContentParser.parseLatestLeagueResults(latestLeagueSoccerstandData)
+    }
+  }
+
+  private def fetchSoccerstandLatestTeamResults(teamInfo: TeamInfo): Future[LatestTeamFinishedMatches] = {
+    communication.latestTeamResultsSource(teamInfo).fetchSoccerstandData { latestTeamResultsSource =>
+      newSoccerstandContentParser.parseLatestTeamResults(latestTeamResultsSource)
     }
   }
 

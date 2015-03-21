@@ -1,37 +1,32 @@
-package soccerstand.job
+package soccerstand.job.fetchers
 
 import java.net.URL
 
-import db.repository.LeagueInfoRepository
 import soccerstand.indexes.TournamentIdsIndexes
-import soccerstand.model.{League, LeagueInfo, TournamentIds, TournamentNumIds}
+import soccerstand.model._
 import soccerstand.parser.SoccerstandDataParser
 import soccerstand.service.communication.SoccerstandCommunication._
 import soccerstand.util.{Measureable, Slf4jLogging}
 
 import scala.util.Try
 
-object LeagueInfoSaver extends Slf4jLogging with Measureable {
+class LeagueInfoFetcher extends Slf4jLogging with Measureable {
   import soccerstand.implicits.Implicits._
   import soccerstand.parser.token.SoccerstandTokens._
 
-  val leagueInfoRepository = new LeagueInfoRepository()
-
-  def main(args: Array[String]) {
-    val basicInfoForAllLeagues = measure("fetching info for leagues from all countries") {
+  def fetchAllLeagues(): Seq[LeagueInfo] = {
+    val basicInfoForAllLeagues = {
       val soccerstandIndexHtml = scala.io.Source.fromURL("http://www.soccerstand.com").mkString
       val countryIdPattern = s"""<li id="lmenu_($anyContent)">""".r
       val idsForAllCountries = countryIdPattern.findAllMatchIn(soccerstandIndexHtml).toList.map { _.group(1).toInt }
       assert(idsForAllCountries.nonEmpty, "no country ids was found!")
       info(s"countries to fetch data for: ${idsForAllCountries.size}")
       idsForAllCountries.par.flatMap { collectDataForAllLeaguesWithinCountry }
+      collectDataForAllLeaguesWithinCountry(6)
     }.seq
-    val leaguesWithoutDuplicates = basicInfoForAllLeagues.distinctBy { league => league.naturalId + league.leagueName}
-    measure(s"saving all base league data for ${leaguesWithoutDuplicates.size} leagues") {
-      leagueInfoRepository.createOrUpdateAll(leaguesWithoutDuplicates)
-    }
+    basicInfoForAllLeagues.distinctBy { league => league.naturalId + league.leagueName}
   }
-
+  //DOIT: move all urls to SoccerstandCommunication
   private def collectDataForAllLeaguesWithinCountry(countryId: Int): Seq[LeagueInfo] = {
     val allLeaguesWithinCountryUrl = s"http://$soccerstandBackendRoute/x/feed/c_1_${countryId}_1_en_y_1"
     val matchesForAllLeaguesWithinCountry = new URL(allLeaguesWithinCountryUrl).setRequestProp("X-Fsign", "SW9D1eZo").makeGetRequest()

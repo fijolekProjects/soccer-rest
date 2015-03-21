@@ -10,6 +10,7 @@ class LeagueInfoRepository extends DBRepository {
     val leagueInfosToSave = prepareLeagueInfosToSave(infos)
     leagueInfosToSave.foreach { leagueInfoToSave =>
       val naturalId = leagueInfoToSave.info.naturalId
+      //DOIT naturalId is not enough for being id? make it simpler!
       val where = Map("naturalId" -> naturalId, "league" -> Map("leagueName" -> leagueInfoToSave.info.leagueName))
       leagueInfoColl.update(where, leagueInfoToSave.infoToSave, upsert = true)
     }
@@ -38,6 +39,10 @@ class LeagueInfoRepository extends DBRepository {
     val where = Map("tournamentIds" -> tournamentIdsQuery)
     val infoFromDB = leagueInfoColl.findOne(where).get
     ConvertFromDBObject.asObject[LeagueInfo](infoFromDB)
+  }
+
+  def findAll(): Seq[LeagueInfo] = {
+    leagueInfoColl.find().map { ConvertFromDBObject.asObject[LeagueInfo] }.toSeq
   }
   
   private case class LeagueInfoToSave(info: LeagueInfo, infoToSave: DBObject)

@@ -14,7 +14,7 @@ object MatchParser {
 
   def parseFinishedMatch(matchToParse: String)(implicit league: League): FinishedMatch = {
     SoccerstandDataParser.parse(matchToParse)(FinishedMatchIndexes) { scoreIndexes =>
-      MatchParser.fromFinishedMatchIndexes(matchToParse, scoreIndexes)
+      fromFinishedMatchIndexes(matchToParse, scoreIndexes)
     }
   }
 
@@ -25,6 +25,20 @@ object MatchParser {
     val round = Try { matchToParse.readDataAfterIdx(matchIndexes.roundIdx) }.getOrElse("")
     val matchId = readMatchId(matchToParse)
     FinishedMatch(matchId, homeTeam, awayTeam, startDate, round)
+  }
+
+  def parseFinishedMatchNoRound(matchToParse: String)(implicit league: League): FinishedMatchNoRound = {
+    SoccerstandDataParser.parse(matchToParse)(FinishedMatchIndexes) { scoreIndexes =>
+      fromFinishedMatchIndexesNoRound(matchToParse, scoreIndexes)
+    }
+  }
+
+  private def fromFinishedMatchIndexesNoRound(matchToParse: String, matchIndexes: FinishedMatchIndexes)(implicit league: League): FinishedMatchNoRound = {
+    val homeTeam = TeamMatchResult.fromIndexes(matchToParse, matchIndexes.homeTeamIdx, matchIndexes.homeTeamScoreIdx)
+    val awayTeam = TeamMatchResult.fromIndexes(matchToParse, matchIndexes.awayTeamIdx, matchIndexes.awayTeamScoreIdx)
+    val startDate = matchToParse.readDateAt(matchIndexes.dateIdx)
+    val matchId = readMatchId(matchToParse)
+    FinishedMatchNoRound(matchId, homeTeam, awayTeam, startDate)
   }
 
   def parseMatch(matchToParse: String)(implicit now: Date, league: League): Match = {

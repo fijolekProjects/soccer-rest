@@ -7,7 +7,7 @@ import akka.http.client.RequestBuilding
 import akka.http.model.HttpResponse
 import akka.http.model.headers.RawHeader
 import akka.stream.scaladsl.Source
-import soccerstand.model.{LeagueInfo, TournamentIds}
+import soccerstand.model.{TeamInfo, LeagueInfo, TournamentIds}
 import soccerstand.service.communication.SoccerstandCommunication._
 
 class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: ActorSystem) {
@@ -37,6 +37,11 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
     SoccerstandRequest.GetBE(urlPath)
   }
 
+  def latestTeamResultsSource(teamInfo: TeamInfo): Source[HttpResponse, Unit] = {
+    val urlPath = s"/x/feed/pr_1_${teamInfo.league.country.code}_${teamInfo.id.value}_0_1_en_1/"
+    SoccerstandRequest.GetBE(urlPath)
+  }
+
   def matchSummarySource(matchId: String): Source[HttpResponse, Unit] = {
     SoccerstandRequest.GetBE(s"/x/feed/d_su_${matchId}_en_1/")
   }
@@ -47,6 +52,10 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
 
   def matchHtmlSource(matchId: String): Source[HttpResponse, Unit] = {
     SoccerstandRequest.GetFE(s"/match/$matchId/")
+  }
+
+  def teamsHtmlSource(leagueInfo: LeagueInfo): Source[HttpResponse, Unit] = {
+    SoccerstandRequest.GetFE(s"/soccer/${leagueInfo.countryName}/${leagueInfo.leagueName}/teams/")
   }
 
   object SoccerstandRequest {
