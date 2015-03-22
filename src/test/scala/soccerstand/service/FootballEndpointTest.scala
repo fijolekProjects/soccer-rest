@@ -15,15 +15,25 @@ import scala.concurrent.duration._
 class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRouteTest with MockitoSugar {
   implicit val timeout = RouteTestTimeout(10.second)
 
+  val bundesliga = League(Country("GERMANY", 81), "Bundesliga")
   val bundesligaLeagueInfo = LeagueInfo(
-    league = League(Country("GERMANY", 81), "Bundesliga"),
+    league = bundesliga,
     tournamentIds = TournamentIds("M1VFOdWr", "pYi5cMuA"),
     tournamentNumIds = TournamentNumIds(160, 160)
   )
+
+  val bayernMunich = TeamInfo(
+    id = SoccerstandTeamId("nVp0wiqd"),
+    naturalId = NaturalTeamId("BayernMunichgermanybundesliga"),
+    name = "Bayern Munich",
+    league = bundesliga
+  )
+
   val leagueInfoRepository = mock[LeagueInfoRepository]
   val teamInfoRepository = mock[TeamInfoRepository]
   when(leagueInfoRepository.findByNaturalId("germany", "bundesliga")).thenReturn(bundesligaLeagueInfo)
   when(leagueInfoRepository.findByTournamentIds(bundesligaLeagueInfo.tournamentIds)).thenReturn(bundesligaLeagueInfo)
+  when(teamInfoRepository.findByNaturalId(bayernMunich.naturalId)).thenReturn(bayernMunich)
 
   val footballEndpoint = new FootballEndpoint(leagueInfoRepository, teamInfoRepository)(ActorDeps.default)
 
@@ -62,6 +72,11 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
     scenario("return 200 for summary match route") {
       val hannoverVsBayernMatchId = "GbFxpC8G"
       Get(s"/summary/$hannoverVsBayernMatchId") ~> routes ~> check {
+        itWorks()
+      }
+    }
+    scenario("return 200 for team matches route") {
+      Get(s"/team/${bayernMunich.naturalId.value}") ~> routes ~> check {
         itWorks()
       }
     }
