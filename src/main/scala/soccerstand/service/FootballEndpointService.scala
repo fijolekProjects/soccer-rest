@@ -5,12 +5,10 @@ import akka.event.Logging
 import akka.http.Http
 import akka.http.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.marshalling._
-import akka.http.model.HttpResponse
 import akka.http.model.StatusCodes._
 import akka.http.server.Directives._
-import akka.http.unmarshalling.Unmarshal
 import akka.stream.ActorFlowMaterializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.Sink
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
@@ -22,7 +20,7 @@ import soccerstand.service.communication.SoccerstandCommunication
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepository: TeamInfoRepository)
-                      (implicit actorDeps: ActorDeps = ActorDeps.default) {
+                      (implicit actorDeps: ActorDeps) {
   implicit val (system, executor, materializer) = actorDeps.unpack
   val logger = Logging(system, getClass)
 
@@ -71,7 +69,8 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   }
   
   private def getUserLeagueInfoAndCompleteWith[T: ToResponseMarshaller](f: LeagueInfo => T) = {
-    (get & pathPrefix(Segment) & pathSuffix(Segment)) { (country, leagueName) =>
+    val directive = get & pathPrefix(Segment) & pathSuffix(Segment)
+    directive { (country, leagueName) =>
       complete {
         val leagueInfo = leagueInfoRepository.findByNaturalId(country, leagueName)
         ToResponseMarshallable { f(leagueInfo) }
@@ -121,19 +120,6 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
     } yield newSoccerstandContentParser.parseMatchSummary(matchId, htmlMatchSummaryData, matchDetails, matchHtml)
   }
 
-  // DOIT it should be value class
-  implicit class SoccerstandSource(source: Source[HttpResponse, Unit]) {
-    def fetchSoccerstandData[T](mapResponse: String => T): Future[T] = {
-      source.runWith(Sink.head()).flatMap { response =>
-        response.status match {
-          case OK =>
-            Unmarshal(response.entity).to[String].map { mapResponse }
-          case _ =>
-            throw new RuntimeException(s"unexpected happenned: ${response.status}")
-        }
-      }
-    }
-  }
 }
 
 object FootballEndpointService extends App {

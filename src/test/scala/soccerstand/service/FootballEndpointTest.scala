@@ -25,7 +25,7 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
   when(leagueInfoRepository.findByNaturalId("germany", "bundesliga")).thenReturn(bundesligaLeagueInfo)
   when(leagueInfoRepository.findByTournamentIds(bundesligaLeagueInfo.tournamentIds)).thenReturn(bundesligaLeagueInfo)
 
-  val footballEndpoint = new FootballEndpoint(leagueInfoRepository, teamInfoRepository)
+  val footballEndpoint = new FootballEndpoint(leagueInfoRepository, teamInfoRepository)(ActorDeps.default)
 
   val routes = footballEndpoint.routes
 

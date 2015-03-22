@@ -13,7 +13,7 @@ import scala.xml.NodeSeq
 object Implicits {
   //DOIT it should be value class
   implicit class SoccerstandData(a: String) {
-    val endSign = '¬'
+    private val endSign = '¬'
     def readIntAt(i: Int) = a.substring(i).takeTillEndSign.toInt
     def readDateAt(i: Int) = new Date(a.substring(i).takeTillEndSign.toLong * 1000)
     def readDataAfterIdx(i: Int) = a.substring(i).takeTillEndSign
