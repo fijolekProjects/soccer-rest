@@ -2,13 +2,13 @@ package soccerstand.parser
 
 import java.util.Date
 
-import db.repository.{TeamInfoRepository, LeagueInfoRepository}
+import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.model._
+import soccerstand.parser.matchstats.{MatchStatistics, Stats, MatchStatisticsParser}
 import soccerstand.parser.matchsummary.MatchEventsParser
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchEvents
 import soccerstand.parser.matchsummary.model.MatchSummary
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.XML
 
 class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepository,
@@ -75,15 +75,7 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
       val teamId = teamIdPattern.findFirstMatchIn(teamData).get.group(1)
       (SoccerstandTeamId(teamId), TeamStanding.fromTdValues(teamDataExtracted, league))
     }
-
     LeagueStandings(league, standingsForTeams.map { case (_, standing) => standing } )
-  }
-
-  //DOIT this method is unused right now, because of the job that saves team info
-  private def saveTeamInfosAsync(standingsForTeam: Map[SoccerstandTeamId, TeamStanding], league: League): Future[Unit] = {
-    import ExecutionContext.Implicits.global
-    val teamInfos = standingsForTeam.map { case (id, teamStanding) => TeamInfo(id, teamStanding.team, league) }
-    Future { teamInfoRepository.createOrUpdateAll(teamInfos) }
   }
 
   def parseTopScorers(league: League, htmlTopScorersData: String): TopScorers = {
@@ -100,11 +92,6 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
     MatchSummary(leagueInfo.league, matchInfo, matchEvents)
   }
 
-  private def leagueInfoFromMatchHtml(matchHtmlPage: String): LeagueInfo = {
-    val tournamentIds = TournamentIds.fromMatchHtmlPage(matchHtmlPage)
-    leagueInfoRepository.findByTournamentIds(tournamentIds)
-  }
-
   private def parseMatchEvents(htmlMatchSummaryData: String): Option[MatchEvents] = {
     val matchSummaryFromTableRegex = "table".dataInsideTagRegex
     for {
@@ -112,4 +99,17 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
       matchSummaryAsHtml = XML.loadString(matchSummaryFromTable.withoutNbsp)
     } yield MatchEventsParser.parseMatchEvents(matchSummaryAsHtml)
   }
+
+  def parseMatchStatistics(matchId: String, matchHtmlStats: String, dataFromMatchId: String, matchHtmlPage: String): MatchStatistics = {
+    val leagueInfo = leagueInfoFromMatchHtml(matchHtmlPage)
+    val matchInfo = MatchParser.parseMatchFromId(matchId, dataFromMatchId, matchHtmlPage)(leagueInfo.league)
+    val stats = MatchStatisticsParser.parseMatchStatistics(matchHtmlStats)
+    MatchStatistics(leagueInfo.league, matchInfo, stats)
+  }
+
+  private def leagueInfoFromMatchHtml(matchHtmlPage: String): LeagueInfo = {
+    val tournamentIds = TournamentIds.fromMatchHtmlPage(matchHtmlPage)
+    leagueInfoRepository.findByTournamentIds(tournamentIds)
+  }
+
 }

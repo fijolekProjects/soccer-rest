@@ -37,6 +37,7 @@ object Implicits {
     def normalizedLeagueName = withoutSeasonSpecifics.withoutWhitespaces
     def withoutSeasonSpecifics = s.replaceAll(" -(.*)", "")
     def withoutParens = s.replaceAll("[()]", "")
+    def withoutPercents = s.replaceAll("%", "")
     def withoutWhitespacesAtFrontAndBack = {
       val head = s.head.toString
       val last = s.last.toString

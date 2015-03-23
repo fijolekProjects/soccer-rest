@@ -14,6 +14,7 @@ import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
 import soccerstand.model._
 import soccerstand.parser.SoccerstandContentParser
+import soccerstand.parser.matchstats.MatchStatistics
 import soccerstand.parser.matchsummary.model.MatchSummary
 import soccerstand.service.communication.SoccerstandCommunication
 
@@ -62,6 +63,11 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
             val teamInfo = teamInfoRepository.findByNaturalId(NaturalTeamId(naturalTeamId))
             val teamResults = fetchSoccerstandLatestTeamResults(teamInfo)
             complete { ToResponseMarshallable(teamResults) }
+          }
+        } ~
+        pathPrefix("stats") {
+          (get & pathSuffix(Segment)) { matchId =>
+            complete { ToResponseMarshallable(fetchSoccerstandMatchStatistics(matchId)) }
           }
         }
       }
@@ -118,6 +124,14 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
       matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
       matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
     } yield newSoccerstandContentParser.parseMatchSummary(matchId, htmlMatchSummaryData, matchDetails, matchHtml)
+  }
+
+  private def fetchSoccerstandMatchStatistics(matchId: String): Future[MatchStatistics] = {
+    for {
+      matchStatsHtml <- communication.matchHtmlStatistics(matchId).fetchSoccerstandData(identity)
+      matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
+      matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+    } yield newSoccerstandContentParser.parseMatchStatistics(matchId, matchStatsHtml, matchDetails, matchHtml)
   }
 
 }

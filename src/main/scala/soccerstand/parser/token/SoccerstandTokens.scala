@@ -22,5 +22,7 @@ object SoccerstandTokens {
   val newMatch = '~'
   val matchId = "AA÷"
   val anyContent = ".+?"
+  val homeTeamMark = "fl"
+  val awayTeamMark = "fr"
 }
 

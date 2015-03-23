@@ -6,6 +6,8 @@ import soccerstand.parser.matchsummary.model.MatchEvent.MatchEventTeam.{AwayTeam
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchStage.{ExtraTimeEvents, FirstHalfEvents, PenaltiesEvents, SecondHalfEvents}
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchStageTag._
 import soccerstand.parser.matchsummary.model.MatchEvent._
+import soccerstand.parser.token.SoccerstandTokens
+import soccerstand.parser.token.SoccerstandTokens._
 import soccerstand.util.Slf4jLogging
 
 import scala.collection.immutable.Seq
@@ -80,9 +82,10 @@ object MatchEventsParser extends Slf4jLogging {
     matchEvents.mapValues { events => events.groupBy { event =>
       val eventType = event \@ "class"
       val eventTypeMark = eventType.takeRight(2)
+
       eventTypeMark match {
-        case "fl" => HomeTeamEvent
-        case "fr" => AwayTeamEvent
+        case `homeTeamMark` => HomeTeamEvent
+        case `awayTeamMark` => AwayTeamEvent
       }
     }}
   }

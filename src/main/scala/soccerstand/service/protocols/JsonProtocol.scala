@@ -5,6 +5,7 @@ import java.util.Date
 import soccerstand.dto.FinishedMatchesDto.{FinishedMatchDto, LatestFinishedMatchesDto, RoundMatches}
 import soccerstand.dto.MatchDto
 import soccerstand.model._
+import soccerstand.parser.matchstats._
 import soccerstand.parser.matchsummary.model.MatchEvent._
 import soccerstand.parser.matchsummary.model.{MatchEvent, MatchSummary}
 import spray.json._
@@ -129,6 +130,15 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
 
   implicit val matchFormat = jsonFormat6(Match.apply)
   implicit val matchSummary = jsonFormat3(MatchSummary.apply)
+
+  implicit val matchStatName = new JsonWriteFormat[MatchStatName] {
+    override def write(obj: MatchStatName): JsValue = JsString(obj.statName)
+  }
+
+  implicit val matchStat = jsonFormat3(MatchStat.apply)
+  implicit val stats = jsonFormat4(Stats.apply)
+  implicit val matchStatistics = jsonFormat3(MatchStatistics.apply)
+
 
   object ManyMatchEventsFormat extends JsonWriteFormat[Seq[MatchEvent]] {
     override def write(obj: Seq[MatchEvent]): JsValue = JsArray(obj.map(MatchEventFormat.write).toVector)
