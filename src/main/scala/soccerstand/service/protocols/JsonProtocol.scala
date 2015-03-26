@@ -27,6 +27,9 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   }
 
   implicit val matchDtoFormat = jsonFormat7(MatchDto.apply)
+  implicit object MatchResultStatusFormat extends CaseObjectFormat[MatchResultStatus]
+  implicit val teamMatch = jsonFormat5(TeamMatch.apply)
+  implicit val teamForm = jsonFormat1(TeamForm.apply)
   implicit object StandingFormat extends JsonWriteFormat[TeamStanding] {
     override def write(obj: TeamStanding): JsValue = {
       JsObject(Map(
@@ -39,7 +42,8 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
         "matchesPlayed" -> JsNumber(obj.matchesPlayed),
         "points" -> JsNumber(obj.points),
         "wins" -> JsNumber(obj.wins),
-        "losses" -> JsNumber(obj.losses)
+        "losses" -> JsNumber(obj.losses),
+        "form" -> teamForm.write(obj.form)
       ))
     }
   }

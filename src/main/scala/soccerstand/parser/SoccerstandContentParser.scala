@@ -9,7 +9,7 @@ import soccerstand.parser.matchsummary.MatchEventsParser
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchEvents
 import soccerstand.parser.matchsummary.model.MatchSummary
 
-import scala.xml.XML
+import scala.xml.{Node, XML}
 
 class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepository,
                                private val teamInfoRepository: TeamInfoRepository) {
@@ -64,18 +64,40 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
   }
 
   def parseLeagueStandings(league: League, leagueHtmlData: String): LeagueStandings = {
+    val tbodyPat = "tbody".dataInsideTagRegex
+    val tbodyData = tbodyPat.findFirstMatchIn(leagueHtmlData.withoutNewlines).get.group(1)
+    val tbodyAsXml = XML.loadString(tbodyData.withoutNbsp.wrapInDiv)
+    val nodesSplittedByTeams = tbodyAsXml \ "tr"
     val allTdTagsPattern = "<td.*".r
     val splittedByTeams = allTdTagsPattern.findAllMatchIn(leagueHtmlData).map(_.toString()).toList
-    val standingsForTeams = splittedByTeams.map { teamData =>
+    //DOIT temporary solution, everything should be parsed in one step
+    val standingsForTeams = splittedByTeams.zip(nodesSplittedByTeams).map { case (teamDataStr, teamDataNode) =>
+      val lastTeamMatches = (teamDataNode \ "td").getNodeFromClass("form") \\ "a"
+      val (nextMatch, pastMatches) = (lastTeamMatches.head, lastTeamMatches.tail)
+      val lastMatchesTyped = pastMatches.map { oneMatch => typedMatchForTeam(league, oneMatch) }
+      val teamForm = TeamForm(lastMatchesTyped)
       val tdTagPattern = "td".dataInsideTagRegex
-      val teamInfo = tdTagPattern.findAllMatchIn(teamData).toList
+      val teamInfo = tdTagPattern.findAllMatchIn(teamDataStr).toList
       val teamHtmlData = XML.loadString(teamInfo.mkString.wrapInDiv)
       val teamDataExtracted = (teamHtmlData \\ "td").take(8).map(_.text).toVector
       val teamIdPattern = s"'/team/$anyContent/($anyContent)/'".r
-      val teamId = teamIdPattern.findFirstMatchIn(teamData).get.group(1)
-      (SoccerstandTeamId(teamId), TeamStanding.fromTdValues(teamDataExtracted, league))
+      val teamId = teamIdPattern.findFirstMatchIn(teamDataStr).get.group(1)
+      (SoccerstandTeamId(teamId), TeamStanding.fromTdValues(teamDataExtracted, league, teamForm))
     }
     LeagueStandings(league, standingsForTeams.map { case (_, standing) => standing } )
+  }
+
+  private def typedMatchForTeam(league: League, oneMatch: Node): TeamMatch = {
+    val oneMatchString = oneMatch.toString()
+    val matchResultStatus = MatchResults.fromNode(oneMatch)
+    val (homeTeamName, awayTeamName) = oneMatchString.extractBetween('(', ')').separateAt(" - ")
+    val matchDate = oneMatchString.extractBetween(')', '"').toDate
+    val (homeTeamGoals, awayTeamGoals) = oneMatchString.extractBetween(']', '&').separateAt(":").map(_.toInt)
+    val idToken = "glib-event-"
+    val matchId = oneMatchString.substring(oneMatchString.indexOf(idToken) + idToken.length).takeWhile(_ != ' ')
+    val homeTeam = TeamMatchResult(Team(homeTeamName, league), Some(homeTeamGoals))
+    val awayTeam = TeamMatchResult(Team(awayTeamName, league), Some(awayTeamGoals))
+    TeamMatch(matchId, homeTeam, awayTeam, matchDate, matchResultStatus)
   }
 
   def parseTopScorers(league: League, htmlTopScorersData: String): TopScorers = {

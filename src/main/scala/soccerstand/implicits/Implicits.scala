@@ -15,10 +15,11 @@ object Implicits {
   implicit class SoccerstandData(a: String) {
     private val endSign = '¬'
     def readIntAt(i: Int) = a.substring(i).takeTillEndSign.toInt
-    def readDateAt(i: Int) = new Date(a.substring(i).takeTillEndSign.toLong * 1000)
+    def readDateAt(i: Int) = a.substring(i).takeTillEndSign.toDate
     def readDataAfterIdx(i: Int) = a.substring(i).takeTillEndSign
     def takeTillEndSign = a.takeWhile(_ != endSign)
     def onlyUsefulData = a.replaceAll(s"$endOfUsefulData1(.*)", "").replaceAll(s"$endOfUsefulData2(.*)", "")
+    def toDate = new Date(a.toLong * 1000)
   }
   implicit class SplittedString(a: String) {
     def splitOmitFirst(regex: String): Array[String] = a.split(regex).tail
@@ -31,6 +32,7 @@ object Implicits {
     }
   }
   implicit class RichString(s: String) {
+    def withoutNewlines = s.replaceAll("[\\t\\n\\r]", "")
     def withoutWhitespaces = s.replaceAll(" ", "")
     def whitespacesToDashes = s.replaceAll(" ", "-").replaceAll("---", "-").replaceAll("'", "-")
     // DOIT: 2 functions below should be elsewhere
@@ -57,7 +59,9 @@ object Implicits {
       val lastWhitespaceIndex = s.lastIndexOf(sign)
       s.drop(lastWhitespaceIndex + 1).withoutWhitespacesAtFrontAndBack
     }
-
+    def extractBetween(a: Char, b: Char) = {
+      s.dropWhile(_ != a).takeWhile(_ != b).tail
+    }
   }
   implicit class HtmlString(h: String) {
     def wrapInDiv = s"<div>$h</div>"
@@ -68,7 +72,9 @@ object Implicits {
   //DOIT it should be value class
   implicit class MatchSummaryXml(xml: NodeSeq) {
     def getTextFromClass(htmlClass: String): String = findTextFromClass(htmlClass).get
-    def findTextFromClass(htmlClass: String): Option[String] = xml.find { n => (n \@ "class").contains(htmlClass) }.map(_.text)
+    def findTextFromClass(htmlClass: String): Option[String] = findNodeFromClass(htmlClass).map(_.text)
+    def getNodeFromClass(htmlClass: String) = findNodeFromClass(htmlClass).get
+    private def findNodeFromClass(htmlClass: String) = xml.find { n => (n \@ "class").contains(htmlClass) }
   }
 
   implicit class RichUrl(url: URL) {
@@ -116,4 +122,10 @@ object Implicits {
     }
   }
 
+  implicit class RichTuple[A](t: (A,A)) {
+    def map[B](f: A => B) = {
+      val (t1, t2) = t
+      (f(t1), f(t2))
+    }
+  }
 }
