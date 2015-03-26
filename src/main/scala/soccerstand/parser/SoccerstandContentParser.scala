@@ -9,7 +9,7 @@ import soccerstand.parser.matchsummary.MatchEventsParser
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchEvents
 import soccerstand.parser.matchsummary.model.MatchSummary
 
-import scala.xml.{Node, XML}
+import scala.xml.{NodeSeq, Node, XML}
 
 class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepository,
                                private val teamInfoRepository: TeamInfoRepository) {
@@ -68,20 +68,15 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
     val tbodyData = tbodyPat.findFirstMatchIn(leagueHtmlData.withoutNewlines).get.group(1)
     val tbodyAsXml = XML.loadString(tbodyData.withoutNbsp.wrapInDiv)
     val nodesSplittedByTeams = tbodyAsXml \ "tr"
-    val allTdTagsPattern = "<td.*".r
-    val splittedByTeams = allTdTagsPattern.findAllMatchIn(leagueHtmlData).map(_.toString()).toList
-    //DOIT temporary solution, everything should be parsed in one step
-    val standingsForTeams = splittedByTeams.zip(nodesSplittedByTeams).map { case (teamDataStr, teamDataNode) =>
-      val lastTeamMatches = (teamDataNode \ "td").getNodeFromClass("form") \\ "a"
+    val standingsForTeams = nodesSplittedByTeams.map { teamDataNode =>
+      val tdValuesForTeam = teamDataNode \ "td"
+      val lastTeamMatches = tdValuesForTeam.getNodeFromClass("form") \\ "a"
       val (nextMatch, pastMatches) = (lastTeamMatches.head, lastTeamMatches.tail)
       val lastMatchesTyped = pastMatches.map { oneMatch => typedMatchForTeam(league, oneMatch) }
       val teamForm = TeamForm(lastMatchesTyped)
-      val tdTagPattern = "td".dataInsideTagRegex
-      val teamInfo = tdTagPattern.findAllMatchIn(teamDataStr).toList
-      val teamHtmlData = XML.loadString(teamInfo.mkString.wrapInDiv)
-      val teamDataExtracted = (teamHtmlData \\ "td").take(8).map(_.text).toVector
+      val teamDataExtracted = tdValuesForTeam.take(8).map(_.text).toVector
       val teamIdPattern = s"'/team/$anyContent/($anyContent)/'".r
-      val teamId = teamIdPattern.findFirstMatchIn(teamDataStr).get.group(1)
+      val teamId = teamIdPattern.findFirstMatchIn(teamDataNode.toString()).get.group(1)
       (SoccerstandTeamId(teamId), TeamStanding.fromTdValues(teamDataExtracted, league, teamForm))
     }
     LeagueStandings(league, standingsForTeams.map { case (_, standing) => standing } )
