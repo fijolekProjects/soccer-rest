@@ -30,15 +30,9 @@ object SoccerstandDataSaver extends Slf4jLogging with Measureable {
     saveTeams(teamInfos)
   }
 
-  private def saveTeams(teamInfos: Seq[TeamInfo]): Unit = {
-    measure(s"saving teams data for: ${teamInfos.size} teams") {
-      teamInfoRepository.createOrUpdateAll(teamInfos)
-    }
-  }
-
-  private def saveLeagues(leagues: Seq[LeagueInfo]): Unit = {
-    measure(s"saving all base league data for ${leagues.size} leagues") {
-      leagueInfoRepository.createOrUpdateAll(leagues)
+  private def allLeagues: Seq[LeagueInfo] = {
+    measure("fetching info for leagues from all countries") {
+      leagueInfoFetcher.fetchAllLeagues()
     }
   }
 
@@ -48,9 +42,15 @@ object SoccerstandDataSaver extends Slf4jLogging with Measureable {
     }
   }
 
-  private def allLeagues: Seq[LeagueInfo] = {
-    measure("fetching info for leagues from all countries") {
-      leagueInfoFetcher.fetchAllLeagues()
+  private def saveLeagues(leagues: Seq[LeagueInfo]): Unit = {
+    measure(s"saving all base league data for ${leagues.size} leagues") {
+      leagueInfoRepository.createOrUpdateAll(leagues)
+    }
+  }
+
+  private def saveTeams(teamInfos: Seq[TeamInfo]): Unit = {
+    measure(s"saving teams data for: ${teamInfos.size} teams") {
+      teamInfoRepository.createOrUpdateAll(teamInfos)
     }
   }
 

@@ -90,7 +90,8 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
   }
 
   private def itWorks(): Unit = {
-    println(Unmarshal(response.entity).to[String])
+    val responseF = Unmarshal(response.entity).to[String]
+    responseF.foreach(println)
     status shouldBe OK
     contentType shouldBe `application/json`
   }

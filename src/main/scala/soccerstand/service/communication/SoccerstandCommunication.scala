@@ -94,7 +94,7 @@ case class SoccerstandSource(source: Source[HttpResponse, Unit]) extends AnyVal 
                              (implicit mat: FlowMaterializer,
                               ec: ExecutionContext,
                               um: Unmarshaller[ResponseEntity, String]): Future[T] = {
-    source.runWith(Sink.head()).flatMap { response =>
+    source.runWith(Sink.head).flatMap { response =>
       response.status match {
         case OK =>
           Unmarshal(response.entity).to[String].map { mapResponse }
