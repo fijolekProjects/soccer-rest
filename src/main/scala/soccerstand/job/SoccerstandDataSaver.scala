@@ -12,7 +12,7 @@ object SoccerstandDataSaver extends Slf4jLogging with Measureable {
   private val teamInfoRepository = new TeamInfoRepository()
 
   def main (args: Array[String]) {
-    saveTeamsInfoOnly()
+    saveAllDataOnEmptyDB()
   }
 
   def saveAllDataOnEmptyDB(): Unit = {

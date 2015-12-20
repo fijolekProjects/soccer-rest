@@ -2,12 +2,12 @@ package soccerstand.service
 
 import akka.actor.ActorSystem
 import akka.event.Logging
-import akka.http.Http
-import akka.http.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.marshalling._
-import akka.http.model.StatusCodes._
-import akka.http.server.Directives._
-import akka.stream.ActorFlowMaterializer
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.marshalling._
+import akka.http.scaladsl.server.Directives._
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
@@ -119,6 +119,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   }
 
   private def fetchSoccerstandMatchSummary(matchId: String): Future[MatchSummary] = {
+    //fixme futures can be run in parallel
     for {
       htmlMatchSummaryData <- communication.matchSummarySource(matchId).fetchSoccerstandData(identity)
       matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
@@ -149,12 +150,12 @@ object FootballEndpointService extends App {
   }).run()
 }
 
-class ActorDeps(system: ActorSystem, executor: ExecutionContextExecutor, materializer: ActorFlowMaterializer) {
+class ActorDeps(system: ActorSystem, executor: ExecutionContextExecutor, materializer: ActorMaterializer) {
   val unpack = (system, executor, materializer)
 }
 object ActorDeps {
   implicit val system = ActorSystem()
   implicit val executor = system.dispatcher
-  implicit val materializer = ActorFlowMaterializer()
+  implicit val materializer = ActorMaterializer()
   def default = new ActorDeps(system, executor, materializer) 
 }

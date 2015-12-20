@@ -22,7 +22,6 @@ class LeagueInfoFetcher extends Slf4jLogging with Measureable {
       assert(idsForAllCountries.nonEmpty, "no country ids was found!")
       info(s"countries to fetch data for: ${idsForAllCountries.size}")
       idsForAllCountries.par.flatMap { collectDataForAllLeaguesWithinCountry }
-      collectDataForAllLeaguesWithinCountry(6)
     }.seq
     basicInfoForAllLeagues.distinctBy { league => league.naturalId + league.leagueName}
   }
@@ -37,7 +36,7 @@ class LeagueInfoFetcher extends Slf4jLogging with Measureable {
 
   private def parseSoccerstandLeagueInfo(soccerstandData: String): Seq[LeagueInfo] = {
     val inputSplittedByLeague = soccerstandData.onlyUsefulData.splitOmitFirst(newLeague)
-    inputSplittedByLeague.par.flatMap { splittedByLeague =>
+    inputSplittedByLeague.flatMap { splittedByLeague =>
       val splittedByMatches = splittedByLeague.split(newMatch)
       val leagueToParse = splittedByMatches.head
       parseLeagueInfo(leagueToParse)
@@ -45,11 +44,18 @@ class LeagueInfoFetcher extends Slf4jLogging with Measureable {
   }
 
   private def parseLeagueInfo(leagueToParse: String): Option[LeagueInfo] = {
-    val league = League.fromString(leagueToParse)
-    val tournamentNumIdsForLeague = findTournamentNumIdsForLeague(league)
-    tournamentNumIdsForLeague.map { tournamentNumIds =>
-      val tournamentIds = parseTournamentIds(leagueToParse)
-      LeagueInfo(league, tournamentIds, tournamentNumIds)
+    Try {
+      val league = League.fromString(leagueToParse)
+      val tournamentNumIdsForLeague = findTournamentNumIdsForLeague(league)
+      tournamentNumIdsForLeague.map { tournamentNumIds =>
+        val tournamentIds = parseTournamentIds(leagueToParse)
+        LeagueInfo(league, tournamentIds, tournamentNumIds)
+      }
+    } match {
+      case scala.util.Success(leagueInfo) => leagueInfo
+      case scala.util.Failure(ex) =>
+        warn(s"Error during league parsing: $leagueToParse")
+        None
     }
   }
 
@@ -64,7 +70,7 @@ class LeagueInfoFetcher extends Slf4jLogging with Measureable {
   private def tournamentNumIdsForLeague(soccerstandResultsHtmlData: String): TournamentNumIds = {
     val tournamentPageSeasonResultsPat = s"""<div id="tournament-page-season-results">($anyContent)</div>""".r
     val tournamentIdPat = s"tournament_id = '($anyContent)';".r
-    val tournamentIdNum = tournamentIdPat.findFirstMatchIn(soccerstandResultsHtmlData).get.group(1).toInt
+    val tournamentIdNum = tournamentIdPat.findFirstMatchIn(soccerstandResultsHtmlData).get.group(1)
     val tournamentPageSeasonResults = tournamentPageSeasonResultsPat.findFirstMatchIn(soccerstandResultsHtmlData).get.group(1).toInt
     TournamentNumIds(tournamentIdNum, tournamentPageSeasonResults)
   }

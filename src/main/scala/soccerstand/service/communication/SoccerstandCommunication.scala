@@ -2,13 +2,12 @@ package soccerstand.service.communication
 
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
-import akka.http.Http
-import akka.http.client.RequestBuilding
-import akka.http.model.{ResponseEntity, HttpResponse}
-import akka.http.model.StatusCodes._
-import akka.http.model.headers.RawHeader
-import akka.http.unmarshalling.{Unmarshaller, Unmarshal}
-import akka.stream.FlowMaterializer
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.client.RequestBuilding
+import akka.http.scaladsl.model.{ResponseEntity, HttpResponse}
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import soccerstand.model.{TeamInfo, LeagueInfo, TournamentIds}
 import soccerstand.service.communication.SoccerstandCommunication._
@@ -91,14 +90,13 @@ object SoccerstandCommunication {
 
 case class SoccerstandSource(source: Source[HttpResponse, Unit]) extends AnyVal {
   def fetchSoccerstandData[T](mapResponse: String => T)
-                             (implicit mat: FlowMaterializer,
+                             (implicit mat: Materializer,
                               ec: ExecutionContext,
                               um: Unmarshaller[ResponseEntity, String]): Future[T] = {
     source.runWith(Sink.head).flatMap { response =>
-      response.status match {
-        case OK =>
+      if (response.status.isSuccess()) {
           Unmarshal(response.entity).to[String].map { mapResponse }
-        case _ =>
+      } else {
           throw new RuntimeException(s"unexpected happenned: ${response.status}")
       }
     }

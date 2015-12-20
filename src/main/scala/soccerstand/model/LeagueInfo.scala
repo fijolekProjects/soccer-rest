@@ -37,7 +37,7 @@ object TournamentIds {
     TournamentIds(tournamentId, tournamentStageId)
   }
 }
-case class TournamentNumIds(tournamentId: Int, tournamentPageSeasonResults: Int)
+case class TournamentNumIds(tournamentId: String, tournamentPageSeasonResults: Int)
 object TournamentNumIds {
-  val zero = TournamentNumIds(-1, -1)
+  val zero = TournamentNumIds("-1", -1)
 }
