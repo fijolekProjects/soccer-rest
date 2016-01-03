@@ -5,6 +5,8 @@ import java.util.Date
 import soccerstand.dto.FinishedMatchesDto.{FinishedMatchDto, LatestFinishedMatchesDto, RoundMatches}
 import soccerstand.dto.MatchDto
 import soccerstand.model._
+import soccerstand.parser.MatchLineupsParser.TeamMembers.{Coach, Player}
+import soccerstand.parser.MatchLineupsParser.{TeamLineup, Lineups, MatchLineups}
 import soccerstand.parser.matchstats._
 import soccerstand.parser.matchsummary.model.MatchEvent._
 import soccerstand.parser.matchsummary.model.{MatchEvent, MatchSummary}
@@ -143,6 +145,11 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   implicit val stats = jsonFormat4(Stats.apply)
   implicit val matchStatistics = jsonFormat3(MatchStatistics.apply)
 
+  implicit val coach = jsonFormat2(Coach.apply)
+  implicit val player = jsonFormat3(Player.apply)
+  implicit val teamLineups = jsonFormat3(TeamLineup.apply)
+  implicit val lineups = jsonFormat2(Lineups.apply)
+  implicit val matchLineups = jsonFormat3(MatchLineups.apply)
 
   object ManyMatchEventsFormat extends JsonWriteFormat[Seq[MatchEvent]] {
     override def write(obj: Seq[MatchEvent]): JsValue = JsArray(obj.map(MatchEventFormat.write).toVector)

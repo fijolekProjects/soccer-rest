@@ -13,6 +13,7 @@ import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
 import soccerstand.model._
+import soccerstand.parser.MatchLineupsParser.MatchLineups
 import soccerstand.parser.SoccerstandContentParser
 import soccerstand.parser.matchstats.MatchStatistics
 import soccerstand.parser.matchsummary.model.MatchSummary
@@ -68,6 +69,11 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
         pathPrefix("stats") {
           (get & pathSuffix(Segment)) { matchId =>
             complete { ToResponseMarshallable(fetchSoccerstandMatchStatistics(matchId)) }
+          }
+        } ~
+        pathPrefix("lineups") {
+          (get & pathSuffix(Segment)) { matchId =>
+            complete { ToResponseMarshallable(fetchSoccerstandMatchLineups(matchId)) }
           }
         }
       }
@@ -135,6 +141,13 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
     } yield newSoccerstandContentParser.parseMatchStatistics(matchId, matchStatsHtml, matchDetails, matchHtml)
   }
 
+  private def fetchSoccerstandMatchLineups(matchId: String): Future[MatchLineups] = {
+    for {
+      matchLineupsHtml <- communication.matchHtmlLineups(matchId).fetchSoccerstandData(identity)
+      matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
+      matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+    } yield newSoccerstandContentParser.parseLineups(matchId, matchLineupsHtml, matchDetails, matchHtml)
+  }
 }
 
 object FootballEndpointService extends App {

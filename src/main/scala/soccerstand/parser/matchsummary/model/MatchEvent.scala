@@ -1,19 +1,11 @@
 package soccerstand.parser.matchsummary.model
 
 import soccerstand.implicits.Implicits._
-import soccerstand.parser.matchsummary.model.MatchEvent.MatchMinute
-import soccerstand.parser.matchsummary.model.MatchEvent.MatchStage.{PenaltiesEvents, ExtraTimeEvents, SecondHalfEvents, FirstHalfEvents}
+import soccerstand.parser.matchsummary.model.MatchEvent.MatchStage.{ExtraTimeEvents, FirstHalfEvents, PenaltiesEvents, SecondHalfEvents}
 
 import scala.collection.immutable.Seq
-import scala.xml.Node
 
 object MatchEvent {
-  sealed trait MatchEventTeam
-  object MatchEventTeam {
-    case object HomeTeamEvent extends MatchEventTeam
-    case object AwayTeamEvent extends MatchEventTeam
-  }
-
   sealed trait MatchStageTag
   object MatchStageTag {
     case object FirstHalf extends MatchStageTag

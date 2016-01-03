@@ -1,12 +1,12 @@
 package soccerstand.parser.matchsummary
 
+import soccerstand.parser.matchsummary.Common.MatchTeamTag
 import soccerstand.parser.matchsummary.extractors.EventsExtractors._
 import soccerstand.parser.matchsummary.model.MatchEvent
-import soccerstand.parser.matchsummary.model.MatchEvent.MatchEventTeam.{AwayTeamEvent, HomeTeamEvent}
+import soccerstand.parser.matchsummary.Common.MatchTeamTag.{AwayTeam, HomeTeam}
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchStage.{ExtraTimeEvents, FirstHalfEvents, PenaltiesEvents, SecondHalfEvents}
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchStageTag._
 import soccerstand.parser.matchsummary.model.MatchEvent._
-import soccerstand.parser.token.SoccerstandTokens
 import soccerstand.parser.token.SoccerstandTokens._
 import soccerstand.util.Slf4jLogging
 
@@ -18,14 +18,14 @@ object MatchEventsParser extends Slf4jLogging {
 
   def parseMatchEvents(matchSummaryAsHtml: Elem): MatchEvents = {
     val typedMatchEvents = allEventsTyped(matchSummaryAsHtml)
-    val homeTeamEvents = typedMatchEvents(HomeTeamEvent)
-    val awayTeamEvents = typedMatchEvents(AwayTeamEvent)
+    val homeTeamEvents = typedMatchEvents(HomeTeam)
+    val awayTeamEvents = typedMatchEvents(AwayTeam)
     val homeTeamMatchEvents = createMatchStageEvents(homeTeamEvents)
     val awayTeamMatchEvents = createMatchStageEvents(awayTeamEvents)
     MatchEvents(homeTeamMatchEvents, awayTeamMatchEvents)
   }
 
-  private def allEventsTyped(matchSummaryAsHtml: Elem): Map[MatchEventTeam, Map[MatchStageTag, Seq[MatchEvent]]] = {
+  private def allEventsTyped(matchSummaryAsHtml: Elem): Map[MatchTeamTag, Map[MatchStageTag, Seq[MatchEvent]]] = {
     val matchEvents = allMatchEvents(matchSummaryAsHtml)
     val matchEventsByTeam = groupEventsByTeam(matchEvents)
     matchEventsByTeam.mapValues { makeEventsTyped }.withDefaultValue(Map())
@@ -72,20 +72,20 @@ object MatchEventsParser extends Slf4jLogging {
     }
   }
 
-  private def groupEventsByTeam(matchEvents: Map[MatchStageTag, NodeSeq]): Map[MatchEventTeam, Map[MatchStageTag, NodeSeq]] = {
+  private def groupEventsByTeam(matchEvents: Map[MatchStageTag, NodeSeq]): Map[MatchTeamTag, Map[MatchStageTag, NodeSeq]] = {
     val groupedByStage = groupEventsByStage(matchEvents)
     val sequenced = groupedByStage.sequence
     sequenced.withDefaultValue(Map())
   }
 
-  private def groupEventsByStage(matchEvents: Map[MatchStageTag, NodeSeq]): Map[MatchStageTag, Map[MatchEventTeam, NodeSeq]] = {
+  private def groupEventsByStage(matchEvents: Map[MatchStageTag, NodeSeq]): Map[MatchStageTag, Map[MatchTeamTag, NodeSeq]] = {
     matchEvents.mapValues { events => events.groupBy { event =>
       val eventType = event \@ "class"
       val eventTypeMark = eventType.takeRight(2)
 
       eventTypeMark match {
-        case `homeTeamMark` => HomeTeamEvent
-        case `awayTeamMark` => AwayTeamEvent
+        case `homeTeamMark` => HomeTeam
+        case `awayTeamMark` => AwayTeam
       }
     }}
   }
@@ -115,6 +115,7 @@ object MatchEventsParser extends Slf4jLogging {
     }
   }
 
+  /*fixme convert Either to Disjunction*/
   private def logUnknownEvents(extracted: Seq[Either[Node, MatchEvent]]): Seq[MatchEvent] = {
     logErrors(extracted)
     extracted.collect { case Right(typedEvent) => typedEvent }

@@ -86,7 +86,12 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
         itWorks()
       }
     }
-
+    scenario("return 200 for match lineups") {
+      val hannoverVsBayernMatchId = "GjmZf5Xd" /*fixme make it work with matches from previous season like GbFxpC8G*/
+      Get(s"/lineups/$hannoverVsBayernMatchId") ~> routes ~> check {
+        itWorks()
+      }
+    }
   }
 
   private def itWorks(): Unit = {

@@ -4,12 +4,13 @@ import java.util.Date
 
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.model._
-import soccerstand.parser.matchstats.{MatchStatistics, Stats, MatchStatisticsParser}
+import soccerstand.parser.MatchLineupsParser.{Lineups, MatchLineups}
+import soccerstand.parser.matchstats.{MatchStatistics, MatchStatisticsParser}
 import soccerstand.parser.matchsummary.MatchEventsParser
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchEvents
 import soccerstand.parser.matchsummary.model.MatchSummary
 
-import scala.xml.{NodeSeq, Node, XML}
+import scala.xml.{Node, XML}
 
 class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepository,
                                private val teamInfoRepository: TeamInfoRepository) {
@@ -115,6 +116,22 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
       matchSummaryFromTable <- matchSummaryFromTableRegex.findFirstIn(htmlMatchSummaryData)
       matchSummaryAsHtml = XML.loadString(matchSummaryFromTable.withoutNbsp)
     } yield MatchEventsParser.parseMatchEvents(matchSummaryAsHtml)
+  }
+
+  def parseLineups(matchId: String, htmlMatchLineupsData: String, dataFromMatchId: String, matchHtmlPage: String): MatchLineups = {
+    val leagueInfo = leagueInfoFromMatchHtml(matchHtmlPage)
+    val matchInfo = MatchParser.parseMatchFromId(matchId, dataFromMatchId, matchHtmlPage)(leagueInfo.league)
+    val matchLineups = parseMatchLineups(htmlMatchLineupsData)
+    MatchLineups(leagueInfo.league, matchInfo, matchLineups)
+  }
+
+  private def parseMatchLineups(htmlMatchLineupsData: String): Lineups = {
+    val tableDataPattern = "table".dataInsideTagRegex
+    val lineupsAllTableData = tableDataPattern.findAllIn(htmlMatchLineupsData).toList
+    //    val formationTableData = lineupsAllTableData(0) fixme formation data
+    val lineupsTableData = lineupsAllTableData(1)
+    val lineupsTableHtml = XML.loadString(lineupsTableData.withoutNbsp)
+    MatchLineupsParser.parseLineups(lineupsTableHtml)
   }
 
   def parseMatchStatistics(matchId: String, matchHtmlStats: String, dataFromMatchId: String, matchHtmlPage: String): MatchStatistics = {
