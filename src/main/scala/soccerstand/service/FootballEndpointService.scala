@@ -125,27 +125,35 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   }
 
   private def fetchSoccerstandMatchSummary(matchId: String): Future[MatchSummary] = {
-    //fixme futures can be run in parallel
+    val htmlMatchSummaryDataF = communication.matchSummarySource(matchId).fetchSoccerstandData(identity)
+    val matchDetailsF = communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
+    val matchHtmlF = communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
     for {
-      htmlMatchSummaryData <- communication.matchSummarySource(matchId).fetchSoccerstandData(identity)
-      matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
-      matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+      htmlMatchSummaryData <- htmlMatchSummaryDataF
+      matchDetails <- matchDetailsF
+      matchHtml <- matchHtmlF
     } yield newSoccerstandContentParser.parseMatchSummary(matchId, htmlMatchSummaryData, matchDetails, matchHtml)
   }
 
   private def fetchSoccerstandMatchStatistics(matchId: String): Future[MatchStatistics] = {
+    val matchStatsHtmlF = communication.matchHtmlStatistics(matchId).fetchSoccerstandData(identity)
+    val matchDetailsF = communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
+    val matchHtmlF = communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
     for {
-      matchStatsHtml <- communication.matchHtmlStatistics(matchId).fetchSoccerstandData(identity)
-      matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
-      matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+      matchStatsHtml <- matchStatsHtmlF
+      matchDetails <- matchDetailsF
+      matchHtml <- matchHtmlF
     } yield newSoccerstandContentParser.parseMatchStatistics(matchId, matchStatsHtml, matchDetails, matchHtml)
   }
 
   private def fetchSoccerstandMatchLineups(matchId: String): Future[MatchLineups] = {
+    val matchLineupsHtmlF = communication.matchHtmlLineups(matchId).fetchSoccerstandData(identity)
+    val matchDetailsF = communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
+    val matchHtmlF = communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
     for {
-      matchLineupsHtml <- communication.matchHtmlLineups(matchId).fetchSoccerstandData(identity)
-      matchDetails <- communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
-      matchHtml <- communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+      matchLineupsHtml <- matchLineupsHtmlF
+      matchDetails <- matchDetailsF
+      matchHtml <- matchHtmlF
     } yield newSoccerstandContentParser.parseLineups(matchId, matchLineupsHtml, matchDetails, matchHtml)
   }
 }
@@ -157,10 +165,7 @@ object FootballEndpointService extends App {
   val teamInfoRepository = new TeamInfoRepository()
   val footbalEnpoint = new FootballEndpoint(leagueInfoRepository, teamInfoRepository)
 
-  //FIXME: Workaround https://github.com/akka/akka/issues/16972 is fixed
-  Http().bind(interface = "0.0.0.0", port = 9000).to(Sink.foreach { conn =>
-      conn.flow.join(footbalEnpoint.routes).run()
-  }).run()
+  Http().bindAndHandle(handler = footbalEnpoint.routes, interface = "0.0.0.0", port = 9000)
 }
 
 class ActorDeps(system: ActorSystem, executor: ExecutionContextExecutor, materializer: ActorMaterializer) {

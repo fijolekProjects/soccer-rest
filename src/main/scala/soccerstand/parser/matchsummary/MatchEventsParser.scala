@@ -1,9 +1,9 @@
 package soccerstand.parser.matchsummary
 
 import soccerstand.parser.matchsummary.Common.MatchTeamTag
+import soccerstand.parser.matchsummary.Common.MatchTeamTag.{AwayTeam, HomeTeam}
 import soccerstand.parser.matchsummary.extractors.EventsExtractors._
 import soccerstand.parser.matchsummary.model.MatchEvent
-import soccerstand.parser.matchsummary.Common.MatchTeamTag.{AwayTeam, HomeTeam}
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchStage.{ExtraTimeEvents, FirstHalfEvents, PenaltiesEvents, SecondHalfEvents}
 import soccerstand.parser.matchsummary.model.MatchEvent.MatchStageTag._
 import soccerstand.parser.matchsummary.model.MatchEvent._
@@ -12,6 +12,8 @@ import soccerstand.util.Slf4jLogging
 
 import scala.collection.immutable.Seq
 import scala.xml.{Elem, Node, NodeSeq}
+import scalaz.Scalaz._
+import scalaz._
 
 object MatchEventsParser extends Slf4jLogging {
   import soccerstand.implicits.Implicits._
@@ -94,35 +96,34 @@ object MatchEventsParser extends Slf4jLogging {
     matchStageTag match {
       case FirstHalf | SecondHalf | ExtraTime =>
         logUnknownEvents { events.map {
-            case YellowCardExtractor(yellowCardEvent)             => Right(yellowCardEvent)
-            case SecondYellowCardExtractor(secondYellowCardEvent) => Right(secondYellowCardEvent)
-            case RedCardExtractor(redCardEvent)                   => Right(redCardEvent)
-            case SubstitutionExtractor(subsEvent)                 => Right(subsEvent)
-            case MissedPenaltyExtractor(missedPenaltyEvent)       => Right(missedPenaltyEvent)
-            case ScoredPenaltyExtractor(scoredPenaltyEvent)       => Right(scoredPenaltyEvent)
-            case GoalExtractor(goalEvent)                         => Right(goalEvent)
-            case OwnGoalExtractor(ownGoalEvent)                   => Right(ownGoalEvent)
-            case unknownEvent                                     => Left(unknownEvent)
+            case YellowCardExtractor(yellowCardEvent)             => yellowCardEvent.right
+            case SecondYellowCardExtractor(secondYellowCardEvent) => secondYellowCardEvent.right
+            case RedCardExtractor(redCardEvent)                   => redCardEvent.right
+            case SubstitutionExtractor(subsEvent)                 => subsEvent.right
+            case MissedPenaltyExtractor(missedPenaltyEvent)       => missedPenaltyEvent.right
+            case ScoredPenaltyExtractor(scoredPenaltyEvent)       => scoredPenaltyEvent.right
+            case GoalExtractor(goalEvent)                         => goalEvent.right
+            case OwnGoalExtractor(ownGoalEvent)                   => ownGoalEvent.right
+            case unknownEvent                                     => unknownEvent.left
           }
         }
       case Penalties =>
         logUnknownEvents { events.map {
-            case OffMatchMissedPenaltyExtractor(missedPenaltyEvent) => Right(missedPenaltyEvent)
-            case OffMatchScoredPenaltyExtractor(scoredPenaltyEvent) => Right(scoredPenaltyEvent)
-            case unknownEvent                                       => Left(unknownEvent)
+            case OffMatchMissedPenaltyExtractor(missedPenaltyEvent) => missedPenaltyEvent.right
+            case OffMatchScoredPenaltyExtractor(scoredPenaltyEvent) => scoredPenaltyEvent.right
+            case unknownEvent                                       => unknownEvent.left
           }
         }
     }
   }
 
-  /*fixme convert Either to Disjunction*/
-  private def logUnknownEvents(extracted: Seq[Either[Node, MatchEvent]]): Seq[MatchEvent] = {
+  private def logUnknownEvents(extracted: Seq[\/[Node, MatchEvent]]): Seq[MatchEvent] = {
     logErrors(extracted)
-    extracted.collect { case Right(typedEvent) => typedEvent }
+    extracted.collect { case \/-(typedEvent) => typedEvent }
   }
 
-  private def logErrors(typedEvents: Seq[Either[Node, MatchEvent]]): Unit = {
-    val errors = typedEvents.collect { case Left(e) => e }
+  private def logErrors(typedEvents: Seq[\/[Node, MatchEvent]]): Unit = {
+    val errors = typedEvents.collect { case -\/(e) => e }
     errors.foreach { e => warn(s"unknown event found: $e")}
   }
 
