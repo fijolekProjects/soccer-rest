@@ -70,6 +70,10 @@ class SoccerstandCommunication(val logger: LoggingAdapter)(implicit system: Acto
     SoccerstandRequest.GetBE(s"/x/feed/d_li_${matchId}_en_1/")
   }
 
+  def matchHtmlCommentary(matchId: String) = {
+    SoccerstandRequest.GetBE(s"/x/feed/d_ph_${matchId}_en_1/")
+  }
+
   object SoccerstandRequest {
     val GetBE = getRequest(soccerstandBackendRoute) _
     val GetFE = getRequest(soccerstandFrontendRoute) _

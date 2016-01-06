@@ -30,6 +30,10 @@ object Implicits {
     def withoutNewlines = s.replaceAll("[\\t\\n\\r]", "")
     def withoutWhitespaces = s.replaceAll(" ", "")
     def whitespacesToDashes = s.replaceAll(" ", "-").replaceAll("---", "-").replaceAll("'", "-")
+    def toOpt: Option[String] = {
+      if (s == null || s.isEmpty) None
+      else Some(s)
+    }
     // DOIT: 2 functions below should be elsewhere
     def normalizedLeagueName = withoutSeasonSpecifics.withoutWhitespaces
     def withoutSeasonSpecifics = s.replaceAll(" -(.*)", "")
@@ -62,6 +66,7 @@ object Implicits {
     def wrapInDiv = s"<div>$h</div>"
     def dataInsideTagRegex = s"(?i)<$h.*?>(.+?)</$h>".r
     def withoutNbsp = h.replaceAll("&nbsp;", "")
+    def withoutNbspAndRaquoAndBr = h.replaceAll("&nbsp;|&raquo;|<br>", "")
   }
 
   //DOIT it should be value class

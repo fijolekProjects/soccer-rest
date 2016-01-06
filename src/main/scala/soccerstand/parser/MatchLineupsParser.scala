@@ -4,6 +4,7 @@ import soccerstand.model.{League, Match}
 import soccerstand.parser.MatchLineupsParser.TeamMembers.{Coach, Player}
 import soccerstand.parser.matchsummary.Common.MatchTeamTag
 import soccerstand.parser.matchsummary.Common.MatchTeamTag.{AwayTeam, HomeTeam}
+import soccerstand.parser.matchsummary.TimedEventsCollector
 import soccerstand.parser.token.SoccerstandTokens._
 
 import scala.xml.{Elem, Node, NodeSeq}
@@ -56,17 +57,10 @@ object MatchLineupsParser {
   }
 
   private def extractMembersFromNode(curr: Node, currentTag: MatchTeamMemberTag): List[ParsedTeamMember] = {
-    val currTeamMemberTds = onlyTimedEvents(curr).lift
+    val currTeamMemberTds = TimedEventsCollector.collect(curr).lift
     val firstMemberParsed = currTeamMemberTds(0).map(parseTeamMember(currentTag, _))
     val secondMemberParsed = currTeamMemberTds(1).map(parseTeamMember(currentTag, _))
     List(firstMemberParsed, secondMemberParsed).flatten
-  }
-
-  private def onlyTimedEvents(events: NodeSeq): NodeSeq = {
-    (events \\ "td").filter { tableCell =>
-      val potentiallyTimedEvents = (tableCell \\ "div").map(_ \@ "class")
-      potentiallyTimedEvents.containsElemWithWord("time-box")
-    }
   }
 
   private def parseTeamMember(matchTag: MatchTeamMemberTag, currTd: Node): ParsedTeamMember = {

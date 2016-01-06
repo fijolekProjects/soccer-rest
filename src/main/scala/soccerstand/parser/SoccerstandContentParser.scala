@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.model._
+import soccerstand.parser.MatchCommentaryParser.{CommentaryFetchModes, CommentaryFetchMode, Commentary, MatchCommentary}
 import soccerstand.parser.MatchLineupsParser.{Lineups, MatchLineups}
 import soccerstand.parser.matchstats.{MatchStatistics, MatchStatisticsParser}
 import soccerstand.parser.matchsummary.MatchEventsParser
@@ -123,6 +124,25 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
     val matchInfo = MatchParser.parseMatchFromId(matchId, dataFromMatchId, matchHtmlPage)(leagueInfo.league)
     val matchLineups = parseMatchLineups(htmlMatchLineupsData)
     MatchLineups(leagueInfo.league, matchInfo, matchLineups)
+  }
+
+  def parseMatchCommentary(matchId: String, htmlMatchLineupsData: String, dataFromMatchId: String, matchHtmlPage: String, mode: CommentaryFetchMode): MatchCommentary = {
+    val leagueInfo = leagueInfoFromMatchHtml(matchHtmlPage)
+    val matchInfo = MatchParser.parseMatchFromId(matchId, dataFromMatchId, matchHtmlPage)(leagueInfo.league)
+    val commentary = parseCommentary(htmlMatchLineupsData, mode)
+    MatchCommentary(leagueInfo.league, matchInfo, commentary)
+  }
+
+  private def parseCommentary(commentaryDataAsHtmlString: String, mode: CommentaryFetchMode): Seq[Commentary] = {
+    val tableDataPattern = "table".dataInsideTagRegex
+    val commentaryData = tableDataPattern.findAllIn(commentaryDataAsHtmlString).toList
+    val commentsToParse = mode match {
+      case CommentaryFetchModes.AllComments => commentaryData(0)
+      case CommentaryFetchModes.ImportantCommentsOnly => commentaryData(1)
+    }
+    val commentsToParseWellFormattedXml = commentsToParse.replaceAll("time-box-sec\"title", "time-box-sec\" title")
+    val commentsHtml = XML.loadString(commentsToParseWellFormattedXml.withoutNbspAndRaquoAndBr)
+    MatchCommentaryParser.parseMatchCommentary(commentsHtml)
   }
 
   private def parseMatchLineups(htmlMatchLineupsData: String): Lineups = {

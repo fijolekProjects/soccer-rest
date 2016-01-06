@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import soccerstand.dto.FinishedMatchesDto.{FinishedMatchDto, LatestFinishedMatchesDto, RoundMatches}
 import soccerstand.dto.MatchDto
 import soccerstand.model._
+import soccerstand.parser.MatchCommentaryParser.{Commentary, MatchCommentary, CommentaryEvent}
 import soccerstand.parser.MatchLineupsParser.TeamMembers.{Coach, Player}
 import soccerstand.parser.MatchLineupsParser.{TeamLineup, Lineups, MatchLineups}
 import soccerstand.parser.matchstats._
@@ -63,62 +64,21 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
     override def write(obj: MatchMinute): JsValue = JsString(obj.prettyPrint)
   }
 
-  trait MatchEventFormatWriter[T <: MatchEvent] extends JsonWriteFormat[T] {
-    val writer: RootJsonFormat[T]
-    val eventName: String
+  class MatchEventFormatWriter[T <: MatchEvent](val writer: RootJsonFormat[T]) extends JsonWriteFormat[T] {
     override def write(obj: T): JsValue =
-      JsObject(Map("event" -> JsString(eventName)) ++ writer.write(obj).asJsObject.fields)
+      JsObject(Map("event" -> JsString(obj.getClass.getSimpleName)) ++ writer.write(obj).asJsObject.fields)
   }
 
-  object YellowCardFormat extends MatchEventFormatWriter[YellowCard] {
-    override val writer = jsonFormat3(YellowCard.apply)
-    override val eventName: String = "yellow card"
-  }
-
-  object SecondYellowCardFormat extends MatchEventFormatWriter[SecondYellowCard] {
-    override val writer = jsonFormat3(SecondYellowCard.apply)
-    override val eventName: String = "second yellow card"
-  }
-
-  object RedCardFormat extends MatchEventFormatWriter[RedCard] {
-    override val writer = jsonFormat3(RedCard.apply)
-    override val eventName: String = "red card"
-  }
-
-  object SubstitutionFormat extends MatchEventFormatWriter[Substitution] {
-    override val writer = jsonFormat3(Substitution.apply)
-    override val eventName: String = "substitution"
-  }
-
-  object GoalFormat extends MatchEventFormatWriter[Goal] {
-    override val writer = jsonFormat3(Goal.apply)
-    override val eventName: String = "goal"
-  }
-
-  object OwnGoalFormat extends MatchEventFormatWriter[OwnGoal] {
-    override val writer = jsonFormat2(OwnGoal.apply)
-    override val eventName: String = "own goal"
-  }
-
-  object MissedPenaltyFormat extends MatchEventFormatWriter[MissedPenalty] {
-    override val writer = jsonFormat2(MissedPenalty.apply)
-    override val eventName: String = "missed penalty"
-  }
-
-  object OffMatchMissedPenaltyFormat extends MatchEventFormatWriter[OffMatchMissedPenalty] {
-    override val writer = jsonFormat2(OffMatchMissedPenalty.apply)
-    override val eventName: String = "missed penalty"
-  }
-
-  object ScoredPenaltyFormat extends MatchEventFormatWriter[ScoredPenalty] {
-    override val writer = jsonFormat2(ScoredPenalty.apply)
-    override val eventName: String = "scored penalty"
-  }
-
-  object OffMatchScoredPenaltyFormat extends MatchEventFormatWriter[OffMatchScoredPenalty] {
-    override val writer = jsonFormat2(OffMatchScoredPenalty.apply)
-    override val eventName: String = "scored penalty"
-  }
+  object YellowCardFormat extends MatchEventFormatWriter[YellowCard](jsonFormat3(YellowCard.apply))
+  object SecondYellowCardFormat extends MatchEventFormatWriter[SecondYellowCard](jsonFormat3(SecondYellowCard.apply))
+  object RedCardFormat extends MatchEventFormatWriter[RedCard](jsonFormat3(RedCard.apply))
+  object SubstitutionFormat extends MatchEventFormatWriter[Substitution](jsonFormat3(Substitution.apply))
+  object GoalFormat extends MatchEventFormatWriter[Goal](jsonFormat3(Goal.apply))
+  object OwnGoalFormat extends MatchEventFormatWriter[OwnGoal](jsonFormat2(OwnGoal.apply))
+  object MissedPenaltyFormat extends MatchEventFormatWriter[MissedPenalty](jsonFormat2(MissedPenalty.apply))
+  object OffMatchMissedPenaltyFormat extends MatchEventFormatWriter[OffMatchMissedPenalty](jsonFormat2(OffMatchMissedPenalty.apply))
+  object ScoredPenaltyFormat extends MatchEventFormatWriter[ScoredPenalty](jsonFormat2(ScoredPenalty.apply))
+  object OffMatchScoredPenaltyFormat extends MatchEventFormatWriter[OffMatchScoredPenalty](jsonFormat2(OffMatchScoredPenalty.apply))
 
   implicit object MatchStageEventsFormat extends JsonWriteFormat[MatchStageEvents] {
     override def write(obj: MatchStageEvents): JsValue = {
@@ -151,6 +111,11 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   implicit val lineups = jsonFormat2(Lineups.apply)
   implicit val matchLineups = jsonFormat3(MatchLineups.apply)
 
+  implicit object CommentaryEventFormat extends CaseObjectFormat[CommentaryEvent]
+
+  implicit val commentary = jsonFormat3(Commentary.apply)
+  implicit val matchCommentary = jsonFormat3(MatchCommentary.apply)
+
   object ManyMatchEventsFormat extends JsonWriteFormat[Seq[MatchEvent]] {
     override def write(obj: Seq[MatchEvent]): JsValue = JsArray(obj.map(MatchEventFormat.write).toVector)
   }
@@ -174,7 +139,9 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
   implicit object PlayerPositionFormat extends CaseObjectFormat[PlayerPosition]
 
   trait CaseObjectFormat[T] extends JsonWriteFormat[T] {
-    override def write(obj: T): JsValue = JsString(obj.getClass.getSimpleName.init)
+    override def write(obj: T): JsValue = {
+      JsString(obj.getClass.getName.drop(obj.getClass.getEnclosingClass.getName.length).init) /*getting case object class name inside another object is not trivial...*/
+    }
   }
 
   implicit object LocalDateTimeJsonFormat extends JsonWriteFormat[LocalDateTime] {

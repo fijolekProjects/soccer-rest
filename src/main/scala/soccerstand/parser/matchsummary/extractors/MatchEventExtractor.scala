@@ -89,4 +89,5 @@ trait CardGivenExtractor[CardGivenMatchEvent <: MatchEvent] extends MatchEventEx
 
 object TimeBoxExtractor {
   def apply(matchEvent: Node): String = (matchEvent \\ "div").getTextFromClass("time-box").init
+  def applyOpt(matchEvent: Node) = (matchEvent \\ "div").getTextFromClass("time-box").toOpt.map(_.init)
 }

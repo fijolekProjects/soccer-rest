@@ -12,6 +12,7 @@ import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
 import soccerstand.model._
+import soccerstand.parser.MatchCommentaryParser.{MatchCommentary, CommentaryFetchModes}
 import soccerstand.parser.MatchLineupsParser.MatchLineups
 import soccerstand.parser.SoccerstandContentParser
 import soccerstand.parser.matchstats.MatchStatistics
@@ -73,6 +74,11 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
         pathPrefix("lineups") {
           (get & pathSuffix(Segment)) { matchId =>
             complete { ToResponseMarshallable(fetchSoccerstandMatchLineups(matchId)) }
+          }
+        } ~
+        pathPrefix("commentary") { /*fixme add fetching mode*/
+          (get & pathSuffix(Segment)) { matchId =>
+            complete { ToResponseMarshallable(fetchSoccerstandMatchCommentary(matchId)) }
           }
         }
       }
@@ -148,6 +154,15 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
       matchDetails <- matchDetailsF
       matchHtml <- matchHtmlF
     } yield newSoccerstandContentParser.parseLineups(matchId, matchLineupsHtml, matchDetails, matchHtml)
+  }
+
+  private def fetchSoccerstandMatchCommentary(matchId: String): Future[MatchCommentary] = {
+    val (matchLineupsHtmlF, matchDetailsF, matchCommentaryF) = fetchMatchDetails(matchId, communication.matchHtmlCommentary(matchId))
+    for {
+      matchLineupsHtml <- matchLineupsHtmlF
+      matchDetails <- matchDetailsF
+      matchCommentary <- matchCommentaryF
+    } yield newSoccerstandContentParser.parseMatchCommentary(matchId, matchLineupsHtml, matchDetails, matchCommentary, CommentaryFetchModes.AllComments /*fixme*/)
   }
 
   private def fetchMatchDetails(matchId: String, customSource: SoccerstandSource): (Future[String], Future[String], Future[String]) /*make it a class when frequently used*/ = {

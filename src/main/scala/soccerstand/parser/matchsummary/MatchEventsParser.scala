@@ -49,10 +49,10 @@ object MatchEventsParser extends Slf4jLogging {
     val extraTimeEvents = allEventsData.slice(startEventIndexes(ExtraTime), startEventIndexes(Penalties))
     val penaltiesEvents = allEventsData.slice(startEventIndexes(Penalties), allEventsDataSize)
     Map(
-      FirstHalf -> onlyTimedEvents(firstHalfEvents),
-      SecondHalf -> onlyTimedEvents(secondHalfEvents),
-      ExtraTime -> onlyTimedEvents(extraTimeEvents),
-      Penalties -> onlyTimedEvents(penaltiesEvents)
+      FirstHalf -> TimedEventsCollector.collect(firstHalfEvents),
+      SecondHalf -> TimedEventsCollector.collect(secondHalfEvents),
+      ExtraTime -> TimedEventsCollector.collect(extraTimeEvents),
+      Penalties -> TimedEventsCollector.collect(penaltiesEvents)
     )
   }
 
@@ -65,13 +65,6 @@ object MatchEventsParser extends Slf4jLogging {
         case "Penalties" => (MatchStageTag.Penalties, i)
       }
     }.toMap
-  }
-
-  private def onlyTimedEvents(events: NodeSeq) = {
-    (events \\ "td").filter { tableCell =>
-      val potentiallyTimedEvents = (tableCell \\ "div").map(_ \@ "class")
-      potentiallyTimedEvents.containsElemWithWord("time-box")
-    }
   }
 
   private def groupEventsByTeam(matchEvents: Map[MatchStageTag, NodeSeq]): Map[MatchTeamTag, Map[MatchStageTag, NodeSeq]] = {
@@ -134,5 +127,15 @@ object MatchEventsParser extends Slf4jLogging {
       extraTime = ExtraTimeEvents(TeamEvents(teamEvents(ExtraTime))),
       penalties = PenaltiesEvents(TeamEvents(teamEvents(Penalties)))
     )
+  }
+}
+
+object TimedEventsCollector {
+  import soccerstand.implicits.Implicits._
+  def collect(events: NodeSeq) = {
+    (events \\ "td").filter { tableCell =>
+      val potentiallyTimedEvents = (tableCell \\ "div").map(_ \@ "class")
+      potentiallyTimedEvents.containsElemWithWord("time-box")
+    }
   }
 }
