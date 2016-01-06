@@ -1,6 +1,6 @@
 package soccerstand.parser
 
-import java.util.Date
+import java.time.LocalDateTime
 
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.model._
@@ -44,7 +44,7 @@ class SoccerstandContentParser(private val leagueInfoRepository: LeagueInfoRepos
   }
 
   def parseLiveScores(soccerstandData: String): TodayScores = {
-    implicit val now = new Date()
+    implicit val now = LocalDateTime.now()
     val leagueScores = extractLeagueAndMatchesToParse(soccerstandData) { case (league, matchesToParse) =>
       implicit val implLeague = league
       val matches = matchesToParse.map { MatchParser.parseMatch }

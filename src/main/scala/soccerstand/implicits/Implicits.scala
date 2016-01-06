@@ -1,12 +1,13 @@
 package soccerstand.implicits
 
-import java.net.{URLConnection, URL}
-import java.util.Date
-import java.util.concurrent.TimeUnit
+import java.net.{URL, URLConnection}
+import java.time.{Instant, LocalDateTime}
+import java.util.TimeZone
 
 import soccerstand.parser.token.SoccerstandTokens._
 
 import scala.collection.generic.CanBuildFrom
+import scala.collection.immutable._
 import scala.collection.{IterableLike, SeqLike}
 import scala.xml.NodeSeq
 
@@ -19,17 +20,11 @@ object Implicits {
     def readDataAfterIdx(i: Int) = a.substring(i).takeTillEndSign
     def takeTillEndSign = a.takeWhile(_ != endSign)
     def onlyUsefulData = a.replaceAll(s"$endOfUsefulData1(.*)", "").replaceAll(s"$endOfUsefulData2(.*)", "")
-    def toDate = new Date(a.toLong * 1000)
+    def toDate = LocalDateTime.ofInstant(Instant.ofEpochSecond(a.toLong), TimeZone.getDefault.toZoneId)
   }
   implicit class SplittedString(a: String) {
     def splitOmitFirst(regex: String): Array[String] = a.split(regex).tail
     def splitOmitFirst(char: Char): Array[String] = a.split(char).tail
-  }
-  implicit class RichDate(date: Date) {
-    def diffInMinutes(otherDate: Date): Int = {
-      val diffInMillies = Math.abs(otherDate.getTime - date.getTime)
-      TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS).toInt
-    }
   }
   implicit class RichString(s: String) {
     def withoutNewlines = s.replaceAll("[\\t\\n\\r]", "")
@@ -128,4 +123,20 @@ object Implicits {
       (f(t1), f(t2))
     }
   }
+
+  implicit class RichSeqDisjunction[A,B](eithers: Seq[scalaz.\/[A,B]]) {
+    def unzipBoth: (Seq[A], Seq[B]) = {
+      eithers.foldLeft((List.empty[A], List.empty[B])) {  case ((lefts, rights), curr) =>
+        curr match {
+          case scalaz.-\/(l) => (l :: lefts, rights)
+          case scalaz.\/-(r) => (lefts, r :: rights)
+        }
+      }
+    }
+  }
+
+  implicit object LocalDateTimeOrdering extends Ordering[LocalDateTime] {
+    override def compare(x: LocalDateTime, y: LocalDateTime): Int = x.compareTo(y)
+  }
+
 }

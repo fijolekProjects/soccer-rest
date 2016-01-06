@@ -1,6 +1,7 @@
 package soccerstand.parser
 
-import java.util.Date
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 import soccerstand.indexes.{MatchFromIdIndexes, FinishedMatchIndexes, MatchIndexes}
 import soccerstand.model.MatchStatus.{Finished, Live, Scheduled}
@@ -41,13 +42,13 @@ object MatchParser {
     FinishedMatchNoRound(matchId, homeTeam, awayTeam, startDate)
   }
 
-  def parseMatch(matchToParse: String)(implicit now: Date, league: League): Match = {
+  def parseMatch(matchToParse: String)(implicit now: LocalDateTime, league: League): Match = {
     SoccerstandDataParser.parse(matchToParse)(MatchIndexes) { scoreIndexes =>
       MatchParser.fromMatchIndexes(matchToParse, scoreIndexes)
     }
   }
 
-  private def fromMatchIndexes(matchToParse: String, matchIndexes: MatchIndexes)(implicit now: Date, league: League): Match = {
+  private def fromMatchIndexes(matchToParse: String, matchIndexes: MatchIndexes)(implicit now: LocalDateTime, league: League): Match = {
     val homeTeam = TeamMatchResult.fromIndexes(matchToParse, matchIndexes.homeTeamIdx, matchIndexes.homeTeamScoreIdx)
     val awayTeam = TeamMatchResult.fromIndexes(matchToParse, matchIndexes.awayTeamIdx, matchIndexes.awayTeamScoreIdx)
     val startDate = matchToParse.readDateAt(matchIndexes.dateIdx)
@@ -58,7 +59,7 @@ object MatchParser {
   }
 
   def parseMatchFromId(matchId: String, dataFromMatchId: String, matchHtmlPage: String)(implicit league: League): Match = {
-    implicit val now = new Date()
+    implicit val now = LocalDateTime.now()
     val teamNamesAndScoresPat = "title".dataInsideTagRegex
     val teamNamesAndScores = teamNamesAndScoresPat.findFirstMatchIn(matchHtmlPage).get.group(1)
     val teamNames = teamNamesAndScores.dataAfter('|')
@@ -73,7 +74,7 @@ object MatchParser {
     }
   }
 
-  private def elapsedMinutesForMatchStatus(startDate: Date, matchStatus: MatchStatus)(implicit now: Date): Option[Int] = matchStatus match {
+  private def elapsedMinutesForMatchStatus(startDate: LocalDateTime, matchStatus: MatchStatus)(implicit now: LocalDateTime): Option[Int] = matchStatus match {
     case Scheduled => None
     case Live => Some(calculateElapsedMinutes(startDate))
     case Finished => None
@@ -85,9 +86,9 @@ object MatchParser {
     matchToParse.readDataAfterIdx(matchIdIdx)
   }
 
-  private def calculateElapsedMinutes(startDate: Date)(implicit now: Date): Int = {
+  private def calculateElapsedMinutes(startDate: LocalDateTime)(implicit now: LocalDateTime): Int = {
     //DOIT it should work for now, but this data should be read, not calculated
-    val diffInMinutes = now.diffInMinutes(startDate)
+    val diffInMinutes = startDate.until(now, ChronoUnit.MINUTES).toInt
     if (diffInMinutes > 45 && diffInMinutes <= 60) 45
     else if (diffInMinutes > 45) diffInMinutes.min(diffInMinutes - 15)
     else diffInMinutes

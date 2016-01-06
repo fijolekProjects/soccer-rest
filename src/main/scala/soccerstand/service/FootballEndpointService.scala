@@ -4,11 +4,10 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.marshalling._
+import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Sink
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
@@ -17,7 +16,7 @@ import soccerstand.parser.MatchLineupsParser.MatchLineups
 import soccerstand.parser.SoccerstandContentParser
 import soccerstand.parser.matchstats.MatchStatistics
 import soccerstand.parser.matchsummary.model.MatchSummary
-import soccerstand.service.communication.SoccerstandCommunication
+import soccerstand.service.communication.{SoccerstandCommunication, SoccerstandSource}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -125,9 +124,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   }
 
   private def fetchSoccerstandMatchSummary(matchId: String): Future[MatchSummary] = {
-    val htmlMatchSummaryDataF = communication.matchSummarySource(matchId).fetchSoccerstandData(identity)
-    val matchDetailsF = communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
-    val matchHtmlF = communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+    val (htmlMatchSummaryDataF, matchDetailsF, matchHtmlF) = fetchMatchDetails(matchId, communication.matchSummarySource(matchId))
     for {
       htmlMatchSummaryData <- htmlMatchSummaryDataF
       matchDetails <- matchDetailsF
@@ -136,9 +133,7 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   }
 
   private def fetchSoccerstandMatchStatistics(matchId: String): Future[MatchStatistics] = {
-    val matchStatsHtmlF = communication.matchHtmlStatistics(matchId).fetchSoccerstandData(identity)
-    val matchDetailsF = communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
-    val matchHtmlF = communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+    val (matchStatsHtmlF, matchDetailsF, matchHtmlF) = fetchMatchDetails(matchId, communication.matchHtmlStatistics(matchId))
     for {
       matchStatsHtml <- matchStatsHtmlF
       matchDetails <- matchDetailsF
@@ -147,14 +142,19 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   }
 
   private def fetchSoccerstandMatchLineups(matchId: String): Future[MatchLineups] = {
-    val matchLineupsHtmlF = communication.matchHtmlLineups(matchId).fetchSoccerstandData(identity)
-    val matchDetailsF = communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
-    val matchHtmlF = communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+    val (matchLineupsHtmlF, matchDetailsF, matchHtmlF) = fetchMatchDetails(matchId, communication.matchHtmlLineups(matchId))
     for {
       matchLineupsHtml <- matchLineupsHtmlF
       matchDetails <- matchDetailsF
       matchHtml <- matchHtmlF
     } yield newSoccerstandContentParser.parseLineups(matchId, matchLineupsHtml, matchDetails, matchHtml)
+  }
+
+  private def fetchMatchDetails(matchId: String, customSource: SoccerstandSource): (Future[String], Future[String], Future[String]) /*make it a class when frequently used*/ = {
+    val customSourceDataF = customSource.fetchSoccerstandData(identity)
+    val matchDetailsF = communication.matchDetailsSource(matchId).fetchSoccerstandData(identity)
+    val matchHtmlF = communication.matchHtmlSource(matchId).fetchSoccerstandData(identity)
+    (customSourceDataF, matchDetailsF, matchHtmlF)
   }
 }
 

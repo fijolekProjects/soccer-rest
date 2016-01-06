@@ -1,6 +1,6 @@
 package soccerstand.service.protocols
 
-import java.util.Date
+import java.time.LocalDateTime
 
 import soccerstand.dto.FinishedMatchesDto.{FinishedMatchDto, LatestFinishedMatchesDto, RoundMatches}
 import soccerstand.dto.MatchDto
@@ -177,8 +177,8 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
     override def write(obj: T): JsValue = JsString(obj.getClass.getSimpleName.init)
   }
 
-  implicit object DateJsonFormat extends JsonWriteFormat[Date] {
-    override def write(obj: Date): JsValue = JsString(obj.toString)
+  implicit object LocalDateTimeJsonFormat extends JsonWriteFormat[LocalDateTime] {
+    override def write(obj: LocalDateTime): JsValue = JsString(obj.toString)
   }
   
   implicit object CountryFormat extends JsonWriteFormat[Country] {

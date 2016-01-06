@@ -59,10 +59,10 @@ object MatchEventsParser extends Slf4jLogging {
   private def findMatchStageBeginningIndexes(allEventsData: Vector[Node]): Map[MatchStageTag, Int] = {
     allEventsData.zipWithIndex.collect { case (node, i) if (node \@ "class").contains("stage-header") =>
       node.text.withoutWhitespacesAtFrontAndBack match {
-        case "1st Half" => (FirstHalf, i)
-        case "2nd Half" => (SecondHalf, i)
-        case "Extra Time" => (ExtraTime, i)
-        case "Penalties" => (Penalties, i)
+        case "1st Half" => (MatchStageTag.FirstHalf, i)
+        case "2nd Half" => (MatchStageTag.SecondHalf, i)
+        case "Extra Time" => (MatchStageTag.ExtraTime, i)
+        case "Penalties" => (MatchStageTag.Penalties, i)
       }
     }.toMap
   }
@@ -118,12 +118,12 @@ object MatchEventsParser extends Slf4jLogging {
   }
 
   private def logUnknownEvents(extracted: Seq[\/[Node, MatchEvent]]): Seq[MatchEvent] = {
-    logErrors(extracted)
-    extracted.collect { case \/-(typedEvent) => typedEvent }
+    val (errors, events) = extracted.unzipBoth
+    logErrors(errors)
+    events
   }
 
-  private def logErrors(typedEvents: Seq[\/[Node, MatchEvent]]): Unit = {
-    val errors = typedEvents.collect { case -\/(e) => e }
+  private def logErrors(errors: Seq[Node]): Unit = {
     errors.foreach { e => warn(s"unknown event found: $e")}
   }
 

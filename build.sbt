@@ -5,9 +5,10 @@ version := "0.1"
 scalaVersion := "2.11.7"
 
 libraryDependencies ++= {
-  val akkaStreamV = "2.0-M2"
+  val akkaStreamV = "2.0.1"
   Seq(
-    "org.scalaz" %% "scalaz-core" % "7.1.1",
+    "org.scalaz" %% "scalaz-core" % "7.2.0",
+    "org.scalaz" %% "scalaz-concurrent" % "7.2.0",
     "com.chuusai" %% "shapeless" % "2.1.0",
     "com.typesafe.akka" %% "akka-stream-experimental"           % akkaStreamV,
     "com.typesafe.akka" %% "akka-http-core-experimental"        % akkaStreamV,

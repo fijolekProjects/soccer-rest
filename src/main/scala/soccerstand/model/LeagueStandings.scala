@@ -1,6 +1,6 @@
 package soccerstand.model
 
-import java.util.Date
+import java.time.LocalDateTime
 
 import db.ConvertableToDBObject
 
@@ -21,7 +21,7 @@ case class TeamStanding(rank: Int,
                         form: TeamForm)
 
 case class TeamForm(lastMatches: Seq[TeamMatch])
-case class TeamMatch(id: String, homeTeam: TeamMatchResult, awayTeam: TeamMatchResult, startDate: Date, result: MatchResultStatus)
+case class TeamMatch(id: String, homeTeam: TeamMatchResult, awayTeam: TeamMatchResult, startDate: LocalDateTime, result: MatchResultStatus)
 
 sealed trait MatchResultStatus
 object MatchResults {
