@@ -140,7 +140,7 @@ object JsonProtocol extends DefaultJsonProtocol with NullOptions {
 
   trait CaseObjectFormat[T] extends JsonWriteFormat[T] {
     override def write(obj: T): JsValue = {
-      JsString(obj.getClass.getName.drop(obj.getClass.getEnclosingClass.getName.length).init) /*getting case object class name inside another object is not trivial...*/
+      JsString(obj.getClass.getName.drop(obj.getClass.getEnclosingClass.getName.length).init.tail) /*getting case object class name inside another object is not trivial...*/
     }
   }
 

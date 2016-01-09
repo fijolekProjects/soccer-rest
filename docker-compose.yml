@@ -1,0 +1,20 @@
+db:
+  build: db/.
+  expose:
+    - "27017"
+  ports:
+    - "27018:27017"
+  volumes:
+    - ./db/data:/root/soccer-rest/data
+app:
+  build: .
+  expose:
+    - "9000"
+  ports:
+    - "9000:9000"
+  volumes:
+    - ~/.m2/repository:/root/.m2/repository
+    - ~/.ivy2/cache:/root/.ivy2/cache
+  command: bash -c "sbt run"
+  links:
+    - db

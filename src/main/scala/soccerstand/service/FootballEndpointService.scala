@@ -3,19 +3,16 @@ package soccerstand.service
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.PathMatcher
-import akka.http.scaladsl.server.PathMatcher.Matching
 import akka.stream.ActorMaterializer
+import com.typesafe.config.ConfigFactory
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
 import soccerstand.model._
-import soccerstand.parser.MatchCommentaryParser.{CommentaryFetchMode, MatchCommentary, CommentaryFetchModes}
+import soccerstand.parser.MatchCommentaryParser.{CommentaryFetchMode, CommentaryFetchModes, MatchCommentary}
 import soccerstand.parser.MatchLineupsParser.MatchLineups
 import soccerstand.parser.SoccerstandContentParser
 import soccerstand.parser.matchstats.MatchStatistics
@@ -29,12 +26,13 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
   implicit val (system, executor, materializer) = actorDeps.unpack
   val logger = Logging(system, getClass)
 
-  private lazy val communication = new SoccerstandCommunication(logger)
-  def newSoccerstandContentParser = new SoccerstandContentParser(leagueInfoRepository, teamInfoRepository)
+  private val communication = new SoccerstandCommunication(logger)
+  val newSoccerstandContentParser = new SoccerstandContentParser(leagueInfoRepository, teamInfoRepository)
 
   val routes = {
     logRequest("soccerstand-data-fetcher") {
       import soccerstand.service.protocols.JsonProtocol._
+      import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
       redirectToNoTrailingSlashIfPresent(Found) {
         pathPrefix("today") {
           (get & pathEnd){
@@ -195,7 +193,8 @@ class ActorDeps(system: ActorSystem, executor: ExecutionContextExecutor, materia
   val unpack = (system, executor, materializer)
 }
 object ActorDeps {
-  implicit val system = ActorSystem()
+  val conf = ConfigFactory.load()
+  implicit val system = ActorSystem("soccer-rest", conf)
   implicit val executor = system.dispatcher
   implicit val materializer = ActorMaterializer()
   def default = new ActorDeps(system, executor, materializer) 
