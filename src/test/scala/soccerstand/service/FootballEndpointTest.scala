@@ -12,7 +12,7 @@ import soccerstand.model._
 
 import scala.concurrent.duration._
 
-class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRouteTest with MockitoSugar {
+class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRouteTest with MockitoSugar with ParallelTestExecution {
   implicit val timeout = RouteTestTimeout(10.second)
 
   val bundesliga = League(Country("GERMANY", 81), "Bundesliga")
@@ -94,7 +94,10 @@ class FootballEndpointTest extends FeatureSpec with Matchers with ScalatestRoute
     }
     scenario("return 200 for match commentary") {
       val hannoverVsBayernMatchId = "GjmZf5Xd" /*fixme make it work with matches from previous season like GbFxpC8G*/
-      Get(s"/commentary/$hannoverVsBayernMatchId") ~> routes ~> check {
+      Get(s"/commentary/all/$hannoverVsBayernMatchId") ~> routes ~> check {
+        itWorks()
+      }
+      Get(s"/commentary/important/$hannoverVsBayernMatchId") ~> routes ~> check {
         itWorks()
       }
     }

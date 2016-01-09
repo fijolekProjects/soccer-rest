@@ -55,5 +55,5 @@ object MatchStatNames extends ReflectiveEnum[MatchStatName] {
   case object RedCards          extends MatchStatName("Red Cards")
   case object YellowCards       extends MatchStatName("Yellow Cards")
 
-  def getByName(statName: String) = MatchStatNames.values.find { _.statName.toLowerCase == statName.toLowerCase }.get
+  def getByName(statName: String) = MatchStatNames.values.find { _.statName.toLowerCase == statName.toLowerCase }.get /*fixme check performance, pattern matching is faster than reflection*/
 }

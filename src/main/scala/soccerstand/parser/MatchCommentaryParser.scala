@@ -27,21 +27,21 @@ object MatchCommentaryParser {
     }
   }
 
-  sealed trait CommentaryEvent
+  sealed abstract class CommentaryEvent(val eventName: String)
   object CommentaryEvent extends Slf4jLogging {
     def fromString(s: String): Option[CommentaryEvent] = {
       s match {
-        case "whistle" => Some(CommentaryEvents.Whistle)
-        case "soccer-ball" => Some(CommentaryEvents.Goal)
-        case "corner" => Some(CommentaryEvents.CornerKick)
-        case "y-card" => Some(CommentaryEvents.YellowCard)
-        case "yr-card" => Some(CommentaryEvents.SecondYellowCard)
-        case "r-card" => Some(CommentaryEvents.RedCard)
-        case "time" => Some(CommentaryEvents.StoppageTime)
-        case "injury" => Some(CommentaryEvents.Injury)
-        case "substitution" => Some(CommentaryEvents.Substitution)
-        case "funfact" => Some(CommentaryEvents.FunFact)
-        case "penalty" => Some(CommentaryEvents.Penalty)
+        case CommentaryEvents.Whistle.eventName =>          Some(CommentaryEvents.Whistle)
+        case CommentaryEvents.Goal.eventName =>             Some(CommentaryEvents.Goal)
+        case CommentaryEvents.CornerKick.eventName =>       Some(CommentaryEvents.CornerKick)
+        case CommentaryEvents.YellowCard.eventName =>       Some(CommentaryEvents.YellowCard)
+        case CommentaryEvents.SecondYellowCard.eventName => Some(CommentaryEvents.SecondYellowCard)
+        case CommentaryEvents.RedCard.eventName =>          Some(CommentaryEvents.RedCard)
+        case CommentaryEvents.StoppageTime.eventName =>     Some(CommentaryEvents.StoppageTime)
+        case CommentaryEvents.Injury.eventName =>           Some(CommentaryEvents.Injury)
+        case CommentaryEvents.Substitution.eventName =>     Some(CommentaryEvents.Substitution)
+        case CommentaryEvents.FunFact.eventName =>          Some(CommentaryEvents.FunFact)
+        case CommentaryEvents.Penalty.eventName =>          Some(CommentaryEvents.Penalty)
         case "lineup1" => None
         case other =>
           warn(s"Unknown commentary event found: $other")
@@ -50,17 +50,17 @@ object MatchCommentaryParser {
     }
   }
   object CommentaryEvents {
-    case object Whistle extends CommentaryEvent
-    case object Goal extends CommentaryEvent
-    case object CornerKick extends CommentaryEvent
-    case object YellowCard extends CommentaryEvent
-    case object SecondYellowCard extends CommentaryEvent
-    case object RedCard extends CommentaryEvent
-    case object StoppageTime extends CommentaryEvent
-    case object Injury extends CommentaryEvent
-    case object Substitution extends CommentaryEvent
-    case object Penalty extends CommentaryEvent
-    case object FunFact extends CommentaryEvent
+    case object Whistle extends CommentaryEvent("whistle")
+    case object Goal extends CommentaryEvent("soccer-ball")
+    case object CornerKick extends CommentaryEvent("corner")
+    case object YellowCard extends CommentaryEvent("y-card")
+    case object SecondYellowCard extends CommentaryEvent("yr-card")
+    case object RedCard extends CommentaryEvent("r-card")
+    case object StoppageTime extends CommentaryEvent("time")
+    case object Injury extends CommentaryEvent("injury")
+    case object Substitution extends CommentaryEvent("substitution")
+    case object Penalty extends CommentaryEvent("penalty")
+    case object FunFact extends CommentaryEvent("funfact")
   }
 
   case class Commentary(minute: Option[MatchMinute], event: Option[CommentaryEvent], text: String)

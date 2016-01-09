@@ -6,13 +6,16 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.PathMatcher
+import akka.http.scaladsl.server.PathMatcher.Matching
 import akka.stream.ActorMaterializer
 import db.repository.{LeagueInfoRepository, TeamInfoRepository}
 import soccerstand.dto.FinishedMatchesDto.LatestFinishedMatchesDto
 import soccerstand.dto.MatchDto
 import soccerstand.model._
-import soccerstand.parser.MatchCommentaryParser.{MatchCommentary, CommentaryFetchModes}
+import soccerstand.parser.MatchCommentaryParser.{CommentaryFetchMode, MatchCommentary, CommentaryFetchModes}
 import soccerstand.parser.MatchLineupsParser.MatchLineups
 import soccerstand.parser.SoccerstandContentParser
 import soccerstand.parser.matchstats.MatchStatistics
@@ -76,15 +79,20 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
             complete { ToResponseMarshallable(fetchSoccerstandMatchLineups(matchId)) }
           }
         } ~
-        pathPrefix("commentary") { /*fixme add fetching mode*/
-          (get & pathSuffix(Segment)) { matchId =>
-            complete { ToResponseMarshallable(fetchSoccerstandMatchCommentary(matchId)) }
+        pathPrefix("commentary") {
+          (get & pathPrefix(Segment) & pathSuffix(Segment)) { case (fetchMode, matchId) =>
+            val commentaryFetchMode = fetchMode match { /*fixme lame*/
+              case "all" => CommentaryFetchModes.AllComments
+              case "important" => CommentaryFetchModes.ImportantCommentsOnly
+            }
+            complete { ToResponseMarshallable(fetchSoccerstandMatchCommentary(matchId, commentaryFetchMode)) }
           }
         }
       }
     }
   }
-  
+
+
   private def getUserLeagueInfoAndCompleteWith[T: ToResponseMarshaller](f: LeagueInfo => T) = {
     val directive = get & pathPrefix(Segment) & pathSuffix(Segment)
     directive { (country, leagueName) =>
@@ -156,13 +164,13 @@ class FootballEndpoint(leagueInfoRepository: LeagueInfoRepository, teamInfoRepos
     } yield newSoccerstandContentParser.parseLineups(matchId, matchLineupsHtml, matchDetails, matchHtml)
   }
 
-  private def fetchSoccerstandMatchCommentary(matchId: String): Future[MatchCommentary] = {
+  private def fetchSoccerstandMatchCommentary(matchId: String, commentaryFetchModes: CommentaryFetchMode = CommentaryFetchModes.ImportantCommentsOnly): Future[MatchCommentary] = {
     val (matchLineupsHtmlF, matchDetailsF, matchCommentaryF) = fetchMatchDetails(matchId, communication.matchHtmlCommentary(matchId))
     for {
       matchLineupsHtml <- matchLineupsHtmlF
       matchDetails <- matchDetailsF
       matchCommentary <- matchCommentaryF
-    } yield newSoccerstandContentParser.parseMatchCommentary(matchId, matchLineupsHtml, matchDetails, matchCommentary, CommentaryFetchModes.AllComments /*fixme*/)
+    } yield newSoccerstandContentParser.parseMatchCommentary(matchId, matchLineupsHtml, matchDetails, matchCommentary, commentaryFetchModes)
   }
 
   private def fetchMatchDetails(matchId: String, customSource: SoccerstandSource): (Future[String], Future[String], Future[String]) /*make it a class when frequently used*/ = {
